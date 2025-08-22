@@ -76,9 +76,9 @@ const Navigation = () => {
           </Button>
           
           <Button asChild size="sm" className="bg-gradient-primary hover:bg-primary/90 shadow-glow">
-            <a href="#donate" className="text-white font-medium">
+            <Link to="/donate" className="text-white font-medium">
               Donate Now
-            </a>
+            </Link>
           </Button>
         </div>
       </div>
