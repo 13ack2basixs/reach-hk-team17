@@ -20,17 +20,29 @@ import {
   Bot,
   Sparkles,
   FileImage,
-  School
+  School,
+  Megaphone,
+  Calendar,
+  Star
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { useAnnouncements } from "@/contexts/AnnouncementContext";
 
 const Admin = () => {
   const { toast } = useToast();
+  const { announcements, addAnnouncement, toggleAnnouncementStatus, deleteAnnouncement } = useAnnouncements();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
   const [generatedBlog, setGeneratedBlog] = useState("");
+
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: "",
+    content: "",
+    studentName: "",
+    school: ""
+  });
 
   // Mock data for demonstration
   const [students] = useState([
@@ -140,6 +152,43 @@ Thank you for being part of this incredible journey of transformation!`;
     setUploadedImages([]);
   };
 
+  // Announcement management functions
+  const handleAddAnnouncement = () => {
+    if (!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.studentName || !newAnnouncement.school) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addAnnouncement(newAnnouncement);
+    setNewAnnouncement({
+      title: "",
+      content: "",
+      studentName: "",
+      school: ""
+    });
+
+    toast({
+      title: "Announcement Added!",
+      description: "Your announcement has been published",
+    });
+  };
+
+  const handleToggleAnnouncementStatus = (id: number) => {
+    toggleAnnouncementStatus(id);
+  };
+
+  const handleDeleteAnnouncement = (id: number) => {
+    deleteAnnouncement(id);
+    toast({
+      title: "Announcement Deleted",
+      description: "The announcement has been removed",
+    });
+  };
+
   return (
     <div className="min-h-screen py-8 px-6">
       <div className="container mx-auto max-w-6xl">
@@ -152,10 +201,14 @@ Thank you for being part of this incredible journey of transformation!`;
         </div>
 
         <Tabs defaultValue="blog-creator" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="blog-creator" className="flex items-center space-x-2">
               <Bot className="w-4 h-4" />
               <span>Blog Creator</span>
+            </TabsTrigger>
+            <TabsTrigger value="announcements" className="flex items-center space-x-2">
+              <Megaphone className="w-4 h-4" />
+              <span>Announcements</span>
             </TabsTrigger>
             <TabsTrigger value="student-grades" className="flex items-center space-x-2">
               <GraduationCap className="w-4 h-4" />
@@ -300,6 +353,138 @@ Thank you for being part of this incredible journey of transformation!`;
                       <p className="text-sm">Upload images and add a description to get started</p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Announcements Tab */}
+          <TabsContent value="announcements">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Add New Announcement */}
+              <Card className="border-0 shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Megaphone className="w-6 h-6 text-primary" />
+                    <span>Add New Announcement</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="announcement-title" className="text-base font-medium">Announcement Title *</Label>
+                    <Input
+                      id="announcement-title"
+                      placeholder="e.g., Lily passed her first English test!"
+                      value={newAnnouncement.title}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="announcement-content" className="text-base font-medium">Announcement Content *</Label>
+                    <Textarea
+                      id="announcement-content"
+                      placeholder="Share the details of this achievement or milestone..."
+                      value={newAnnouncement.content}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                      className="mt-2 min-h-[100px] resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="student-name" className="text-base font-medium">Student Name *</Label>
+                      <Input
+                        id="student-name"
+                        placeholder="e.g., Lily"
+                        value={newAnnouncement.studentName}
+                        onChange={(e) => setNewAnnouncement({...newAnnouncement, studentName: e.target.value})}
+                        className="mt-2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="school" className="text-base font-medium">School *</Label>
+                      <select
+                        id="school"
+                        value={newAnnouncement.school}
+                        onChange={(e) => setNewAnnouncement({...newAnnouncement, school: e.target.value})}
+                        className="mt-2 w-full px-3 py-2 border border-input bg-background rounded-md"
+                      >
+                        <option value="">Select School</option>
+                        {schools.map(school => (
+                          <option key={school} value={school}>{school}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+
+
+                  <Button 
+                    onClick={handleAddAnnouncement}
+                    className="w-full bg-gradient-primary hover:bg-primary/90"
+                  >
+                    <Megaphone className="w-4 h-4 mr-2" />
+                    Publish Announcement
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Manage Announcements */}
+              <Card className="border-0 shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Star className="w-6 h-6 text-secondary" />
+                    <span>Manage Announcements</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {announcements.map((announcement) => (
+                      <Card key={announcement.id} className="card-hover">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="font-semibold text-lg">{announcement.title}</h3>
+                                <Badge variant={announcement.isActive ? "default" : "outline"}>
+                                  {announcement.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {announcement.content}
+                              </p>
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                <div className="flex items-center space-x-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{new Date(announcement.date).toLocaleDateString()}</span>
+                                </div>
+                                <span>•</span>
+                                <span>{announcement.studentName} - {announcement.school}</span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleToggleAnnouncementStatus(announcement.id)}
+                              >
+                                {announcement.isActive ? "Deactivate" : "Activate"}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleDeleteAnnouncement(announcement.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
