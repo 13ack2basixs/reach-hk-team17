@@ -12,6 +12,7 @@ import Admin from "./pages/Admin";
 import DonorDashboard from "./pages/DonorDashboard";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
+import StoryDetail from "@/pages/StoryDetail";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/schools" element={<Schools />} />
           <Route path="/blogs" element={<Blogs />} />
+           <Route path="/stories/:id" element={<StoryDetail />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/donor-login" element={<DonorDashboard />} />
