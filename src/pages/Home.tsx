@@ -184,9 +184,9 @@ const Home = () => {
                 size="lg" 
                 className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6"
               >
-                <a href="#donate">
+                <Link to="/donate">
                   Start Donating Today
-                </a>
+                </Link>
               </Button>
             </div>
           </div>
