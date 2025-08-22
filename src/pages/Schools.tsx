@@ -14,7 +14,7 @@ import {
   Calendar
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
+import { Link } from "react-router-dom";
 
 const Schools = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,7 +70,7 @@ const Schools = () => {
       impact: "Donations funded a new computer lab with 20 workstations.",
       recentNews: "Student artwork displayed at city cultural center!",
       needsLevel: "High",
-      images: ["/schools/brightfutures.png"],
+      images: ["/schools/brightfuture.png"],
       totalDonations: 9800
     }
   ];
@@ -232,11 +232,12 @@ const Schools = () => {
                             </div>
                           </div>
                         </div>
-                        
-                        <Button className="w-full bg-gradient-primary hover:bg-primary/90">
-                          <Heart className="w-4 h-4 mr-2" />
-                          Donate to {school.name}
-                        </Button>
+                        <Link to="/donate" state={{ school: school.name }}>
+                          <Button className="w-full bg-gradient-primary hover:bg-primary/90">
+                            <Heart className="w-4 h-4 mr-2" />
+                            Donate to {school.name}
+                          </Button>
+                        </Link>
                       </div>
                     </DialogContent>
                   </Dialog>
