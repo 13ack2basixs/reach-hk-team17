@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,12 +29,31 @@ import {
   DollarSign,
   User,
   Building,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAnnouncements } from "@/contexts/AnnouncementContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  createDonorProfile, 
+  addDonation, 
+  updateDonation, 
+  deleteDonation, 
+  getDonorsWithDonations, 
+  getDonorProfileByEmail,
+  getDonationsByEmail,
+  subscribeToDonors,
+  searchDonors,
+  filterDonors,
+  getDonationStats,
+  getMonthlyDonationData,
+  testDonorCollections,
+  type Donor,
+  type DonorProfile,
+  type Donation
+} from "@/services/donorService";
 
 const Admin = () => {
   const { toast } = useToast();
@@ -118,35 +137,8 @@ const Admin = () => {
   const regions = ["Sham Shui Po", "Kwun Tong", "Tin Shui Wai", "Tuen Mun"];
 
   // Donor management state
-  const [donors, setDonors] = useState([
-    {
-      id: "1",
-      name: "John Smith",
-      email: "john@example.com",
-      amount: 500,
-      school: "Sunshine Kindergarten",
-      donorType: "Individual",
-      dateDonated: "2024-01-15",
-    },
-    {
-      id: "2",
-      name: "Sarah Johnson",
-      email: "sarah@example.com",
-      amount: 750,
-      school: "Rainbow Learning Center",
-      donorType: "Individual",
-      dateDonated: "2024-01-10",
-    },
-    {
-      id: "3",
-      name: "Mike Chen",
-      email: "mike@example.com",
-      amount: 300,
-      school: "Hope Valley School",
-      donorType: "Individual",
-      dateDonated: "2024-01-08",
-    },
-  ]);
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [donorSearchTerm, setDonorSearchTerm] = useState("");
   const [selectedDonorSchool, setSelectedDonorSchool] = useState("");
   const [editingDonor, setEditingDonor] = useState(null);
@@ -155,7 +147,7 @@ const Admin = () => {
     email: "",
     amount: "",
     school: "",
-    donorType: "Individual",
+    donorType: "Individual" as "Individual" | "Corporate",
     dateDonated: new Date().toISOString().split('T')[0]
   });
   const [showDonorModal, setShowDonorModal] = useState(false);
@@ -164,7 +156,7 @@ const Admin = () => {
   const [selectedDonorType, setSelectedDonorType] = useState("");
 
   // sample 12-month donation data for the chart
-  const monthlyDonationData = [
+  const [monthlyDonationData, setMonthlyDonationData] = useState([
     { month: 'Jan', amount: 12500 },
     { month: 'Feb', amount: 15800 },
     { month: 'Mar', amount: 14200 },
@@ -177,7 +169,81 @@ const Admin = () => {
     { month: 'Oct', amount: 19800 },
     { month: 'Nov', amount: 23400 },
     { month: 'Dec', amount: 26700 }
-  ];
+  ]);
+
+  // Firebase statistics state
+  const [donationStats, setDonationStats] = useState({
+    totalDonations: 0,
+    totalDonors: 0,
+    averageDonation: 0,
+    thisMonthDonations: 0
+  });
+
+  // Firebase integration
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        console.log("🔥 Testing Firebase connection...");
+        setLoading(true);
+        
+        // Test Firebase connection first
+        console.log("🔍 Testing basic Firestore access...");
+        
+        // Test if we can access donor collections
+        const collectionsTest = await testDonorCollections();
+        if (!collectionsTest) {
+          throw new Error("Cannot access donor collections - check Firestore rules");
+        }
+        
+        const testConnection = await getDonorsWithDonations();
+        console.log("✅ Firebase connection successful:", testConnection);
+        
+        const [donorsData, monthlyData, stats] = await Promise.all([
+          getDonorsWithDonations(),
+          getMonthlyDonationData(),
+          getDonationStats()
+        ]);
+        
+        setDonors(donorsData);
+        setMonthlyDonationData(monthlyData);
+        setDonationStats(stats);
+      } catch (error) {
+        console.error('❌ Error fetching initial data:', error);
+        toast({
+          title: "Firebase Connection Error",
+          description: `Failed to connect to Firebase: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+
+    // Set up real-time listener
+    const unsubscribe = subscribeToDonors((updatedDonors) => {
+      setDonors(updatedDonors);
+      
+      // Refresh chart data when donors change
+      const refreshChartData = async () => {
+        try {
+          const [newMonthlyData, newStats] = await Promise.all([
+            getMonthlyDonationData(),
+            getDonationStats()
+          ]);
+          setMonthlyDonationData(newMonthlyData);
+          setDonationStats(newStats);
+        } catch (error) {
+          console.error('Error refreshing chart data:', error);
+        }
+      };
+      
+      refreshChartData();
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -323,38 +389,39 @@ Thank you for being part of this incredible journey of transformation!`;
         
         if (isEditingExistingDonation) {
           // Update existing donation
-          const updatedDonors = donors.map((d) => 
-            d.id === editingDonor.id 
-              ? {
-                  ...d,
-                  amount: amount,
-                  school: donorForm.school,
-                  donorType: donorForm.donorType,
-                  dateDonated: donorForm.dateDonated,
-                }
-              : d
-          );
-          
-          setDonors(updatedDonors);
+          await updateDonation(editingDonor.id, {
+            amount: amount,
+            school: donorForm.school,
+            dateDonated: donorForm.dateDonated,
+          });
           
           toast({
             title: "Donation Updated!",
             description: `Donation has been updated successfully.`,
           });
         } else {
+          console.log("➕ Adding new donation to existing donor:", editingDonor.email);
           // Add new donation to existing donor
-          const newDonation = {
-            id: Date.now().toString(),
-            name: editingDonor.name,
-            email: editingDonor.email,
+          let donorProfile;
+          try {
+            donorProfile = await getDonorProfileByEmail(editingDonor.email);
+            console.log("📋 Donor profile result:", donorProfile);
+            
+            if (!donorProfile) {
+              console.log("❌ Donor profile not found for:", editingDonor.email);
+              throw new Error('Donor profile not found');
+            }
+          } catch (error) {
+            console.error("❌ Error in getDonorProfileByEmail:", error);
+            throw error;
+          }
+
+          await addDonation({
+            donorId: donorProfile.id!,
             amount: amount,
             school: donorForm.school,
-            donorType: donorForm.donorType,
             dateDonated: donorForm.dateDonated,
-            createdAt: new Date(),
-          };
-
-          setDonors([...donors, newDonation]);
+          });
 
           toast({
             title: "Donation Added!",
@@ -362,24 +429,46 @@ Thank you for being part of this incredible journey of transformation!`;
           });
         }
       } else {
-        // Add new donor
-        const newDonor = {
-          id: Date.now().toString(),
-          name: donorForm.name,
-          email: donorForm.email,
-          amount: amount,
-          school: donorForm.school,
-          donorType: donorForm.donorType,
-          dateDonated: donorForm.dateDonated,
-          createdAt: new Date(),
-        };
+        console.log("🆕 Adding new donor...");
+        // Check if donor profile already exists
+        const existingProfile = await getDonorProfileByEmail(donorForm.email);
+        console.log("🔍 Existing profile check:", existingProfile);
+        
+        if (existingProfile) {
+          // Add donation to existing profile
+          await addDonation({
+            donorId: existingProfile.id!,
+            amount: amount,
+            school: donorForm.school,
+            dateDonated: donorForm.dateDonated,
+          });
 
-        setDonors([...donors, newDonor]);
+          toast({
+            title: "Donation Added!",
+            description: `New donation of $${amount.toLocaleString()} has been added to ${donorForm.name}'s profile.`,
+          });
+        } else {
+          console.log("🏗️ Creating new donor profile for:", donorForm.email);
+          // Create new donor profile and add donation
+          const newProfile = await createDonorProfile({
+            name: donorForm.name,
+            email: donorForm.email,
+            donorType: donorForm.donorType,
+          });
+          console.log("✅ New profile created:", newProfile);
 
-        toast({
-          title: "New Donor Added!",
-          description: `${donorForm.name} has been added to the donor list.`,
-        });
+          await addDonation({
+            donorId: newProfile.id!,
+            amount: amount,
+            school: donorForm.school,
+            dateDonated: donorForm.dateDonated,
+          });
+
+          toast({
+            title: "New Donor Added!",
+            description: `${donorForm.name} has been added to the donor list with a donation of $${amount.toLocaleString()}.`,
+          });
+        }
       }
 
       // Reset form
@@ -388,15 +477,24 @@ Thank you for being part of this incredible journey of transformation!`;
         email: "",
         amount: "",
         school: "",
-        donorType: "Individual",
+        donorType: "Individual" as "Individual" | "Corporate",
         dateDonated: new Date().toISOString().split('T')[0]
       });
       setEditingDonor(null);
     } catch (error) {
       console.error("Error saving donor:", error);
+      
+      // Show more detailed error information
+      let errorMessage = "Failed to save donor information";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to save donor information",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -414,12 +512,21 @@ Thank you for being part of this incredible journey of transformation!`;
     });
   };
 
-  const handleDeleteDonor = (donorId: string) => {
-    setDonors(donors.filter((d) => d.id !== donorId));
-    toast({
-      title: "Donor Removed",
-      description: "Donor has been removed from the list.",
-    });
+  const handleDeleteDonor = async (donationId: string) => {
+    try {
+      await deleteDonation(donationId);
+      toast({
+        title: "Donation Removed",
+        description: "Donation has been removed from the list.",
+      });
+    } catch (error) {
+      console.error("Error deleting donation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete donation",
+        variant: "destructive",
+      });
+    }
   };
 
   const clearAllFilters = () => {
@@ -428,18 +535,34 @@ Thank you for being part of this incredible journey of transformation!`;
     setDonorSearchTerm("");
   };
 
-  // Filter donors
-  const filteredDonors = donors.filter((donor) => {
-    const matchesSearch =
-      donor.name.toLowerCase().includes(donorSearchTerm.toLowerCase()) ||
-      donor.email.toLowerCase().includes(donorSearchTerm.toLowerCase());
-    const matchesSchool =
-      !selectedDonorSchool || donor.school === selectedDonorSchool;
-    const matchesDonorType =
-      !selectedDonorType || donor.donorType === selectedDonorType;
+  // Filter donors with Firebase
+  const [filteredDonors, setFilteredDonors] = useState<Donor[]>([]);
 
-    return matchesSearch && matchesSchool && matchesDonorType;
-  });
+  // Update filtered donors when search or filters change
+  useEffect(() => {
+    const updateFilteredDonors = async () => {
+      try {
+        let results = donors;
+        
+        // Apply search filter
+        if (donorSearchTerm.trim()) {
+          results = await searchDonors(donorSearchTerm);
+        }
+        
+        // Apply additional filters
+        if (selectedDonorSchool || selectedDonorType) {
+          results = await filterDonors(selectedDonorSchool, selectedDonorType);
+        }
+        
+        setFilteredDonors(results);
+      } catch (error) {
+        console.error('Error filtering donors:', error);
+        setFilteredDonors(donors); // Fallback to all donors
+      }
+    };
+
+    updateFilteredDonors();
+  }, [donors, donorSearchTerm, selectedDonorSchool, selectedDonorType]);
 
   return (
     <div className="min-h-screen py-8 px-6">
@@ -770,22 +893,34 @@ Thank you for being part of this incredible journey of transformation!`;
                         <BadgeDollarSignIcon className="w-6 h-6 text-primary" />
                         <span>Key Metrics</span>
                       </CardTitle>
-                      <div className="flex items-center space-x-3">
-                        <select
-                          className="px-3 py-2 border border-input bg-background rounded-md text-sm"
-                          value={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`}
-                        >
-                          {Array.from({ length: 12 }, (_, i) => {
-                            const date = new Date();
-                            date.setMonth(date.getMonth() - i);
-                            return (
-                              <option key={i} value={`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`}>
-                                {date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const [newMonthlyData, newStats] = await Promise.all([
+                              getMonthlyDonationData(),
+                              getDonationStats()
+                            ]);
+                            setMonthlyDonationData(newMonthlyData);
+                            setDonationStats(newStats);
+                            toast({
+                              title: "Chart Refreshed",
+                              description: "Chart data has been updated",
+                            });
+                          } catch (error) {
+                            console.error('Error refreshing chart:', error);
+                            toast({
+                              title: "Error",
+                              description: "Failed to refresh chart data",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh Chart
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -794,33 +929,40 @@ Thank you for being part of this incredible journey of transformation!`;
                       <div className="text-center p-4 bg-muted/30 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">Total Donations</p>
                         <p className="text-2xl font-bold text-primary">
-                          ${donors.reduce((sum, donor) => sum + donor.amount, 0).toLocaleString()}
+                          ${donationStats.totalDonations.toLocaleString()}
                         </p>
                       </div>
                       <div className="text-center p-4 bg-muted/30 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">Total Donors</p>
                         <p className="text-2xl font-bold text-secondary">
-                          {donors.length}
+                          {donationStats.totalDonors}
                         </p>
                       </div>
                       <div className="text-center p-4 bg-muted/30 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">Average Donation</p>
                         <p className="text-2xl font-bold text-accent">
-                          ${Math.round(donors.reduce((sum, donor) => sum + donor.amount, 0) / donors.length || 0).toLocaleString()}
+                          ${Math.round(donationStats.averageDonation).toLocaleString()}
                         </p>
                       </div>
                       <div className="text-center p-4 bg-muted/30 rounded-lg">
                         <p className="text-sm text-muted-foreground mb-1">This Month</p>
                         <p className="text-2xl font-bold text-green-600">
-                          ${Math.round(donors.reduce((sum, donor) => sum + donor.amount, 0) * 0.15).toLocaleString()}
+                          ${donationStats.thisMonthDonations.toLocaleString()}
                         </p>
                       </div>
                     </div>
 
                     {/* 12-Month Line Graph */}
                     <div className="h-64 bg-background rounded-lg border border-border">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={monthlyDonationData}>
+                      {/* Debug info - remove this later */}
+                      <div className="p-2 text-xs text-muted-foreground bg-muted/20 rounded mb-2">
+                        Chart data: {monthlyDonationData.length} months | 
+                        Total: ${monthlyDonationData.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}
+                      </div>
+                      
+                      {monthlyDonationData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={monthlyDonationData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                           <XAxis 
                             dataKey="month" 
@@ -856,6 +998,14 @@ Thank you for being part of this incredible journey of transformation!`;
                           />
                         </LineChart>
                       </ResponsiveContainer>
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                          <p className="text-muted-foreground">Loading chart data...</p>
+                        </div>
+                      </div>
+                    )}
                     </div>
                   </CardContent>
                 </Card>
@@ -931,30 +1081,43 @@ Thank you for being part of this incredible journey of transformation!`;
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {donors.slice(0, 5).map((donor, index) => (
-                        <div key={donor.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                              {donor.name.split(" ").map((n) => n[0]).join("")}
+                      {donors
+                        .sort((a, b) => new Date(b.dateDonated).getTime() - new Date(a.dateDonated).getTime())
+                        .slice(0, 5)
+                        .map((donor) => {
+                          const donationDate = new Date(donor.dateDonated);
+                          const now = new Date();
+                          const diffTime = Math.abs(now.getTime() - donationDate.getTime());
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          
+                          let timeAgo = '';
+                          if (diffDays === 1) timeAgo = '1 day ago';
+                          else if (diffDays < 7) timeAgo = `${diffDays} days ago`;
+                          else if (diffDays < 30) timeAgo = `${Math.ceil(diffDays / 7)} week${Math.ceil(diffDays / 7) > 1 ? 's' : ''} ago`;
+                          else timeAgo = `${Math.ceil(diffDays / 30)} month${Math.ceil(diffDays / 30) > 1 ? 's' : ''} ago`;
+                          
+                          return (
+                            <div key={donor.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                  {donor.name.split(" ").map((n) => n[0]).join("")}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{donor.name}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {donor.donorType} • {donor.school}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-green-600">${donor.amount.toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {timeAgo}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium">{donor.name}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {donor.donorType} • {donor.school}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-green-600">${donor.amount.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {index === 0 ? '2 days ago' : 
-                               index === 1 ? '5 days ago' : 
-                               index === 2 ? '1 week ago' : 
-                               index === 3 ? '2 weeks ago' : '3 weeks ago'}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        })}
                     </div>
                   </CardContent>
                 </Card>
@@ -1025,8 +1188,14 @@ Thank you for being part of this incredible journey of transformation!`;
                 </div>
 
                     {/* Donors List */}
-                    <div className="space-y-4">
-                      {filteredDonors.map((donor) => (
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Loading donors...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredDonors.map((donor) => (
                         <Card key={donor.id} className="card-hover">
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
@@ -1103,7 +1272,8 @@ Thank you for being part of this incredible journey of transformation!`;
                           </CardContent>
                         </Card>
                       ))}
-                    </div>
+                      </div>
+                    )}
 
                     {filteredDonors.length === 0 && (
                       <div className="text-center py-8">
@@ -1635,7 +1805,7 @@ Thank you for being part of this incredible journey of transformation!`;
                     onChange={(e) =>
                       setDonorForm({
                         ...donorForm,
-                        donorType: e.target.value,
+                        donorType: e.target.value as "Individual" | "Corporate",
                       })
                     }
                     disabled={!!editingDonor}
@@ -1680,9 +1850,13 @@ Thank you for being part of this incredible journey of transformation!`;
                   </Button>
                   <Button
                     className="bg-primary hover:bg-primary/90"
-                    onClick={() => {
-                      handleDonorSubmit();
-                      setShowDonorModal(false);
+                    onClick={async () => {
+                      try {
+                        await handleDonorSubmit();
+                        setShowDonorModal(false);
+                      } catch (error) {
+                        console.error('Error submitting donor:', error);
+                      }
                     }}
                   >
                     {editingDonor ? (
