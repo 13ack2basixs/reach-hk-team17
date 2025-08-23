@@ -6,11 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Upload, 
-  Send, 
-  Users, 
-  GraduationCap, 
+import {
+  Upload,
+  Send,
+  Users,
+  GraduationCap,
   BookOpen,
   Plus,
   Search,
@@ -40,6 +40,7 @@ import { uploadImages, saveStory } from "@/services/blogService";
 import { callGenerateBlog } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { addTailwindClassesToHtml } from "@/services/blogService";
 
 // The structured blog we get back from the Cloud Function
 type Generated = {
@@ -336,7 +337,7 @@ const Admin = () => {
           class: quickGradeForm.class,
           english: englishGrade,
           math: mathGrade,
-      region: "Tin Shui Wai",
+          region: "Tin Shui Wai",
         });
 
         toast({
@@ -377,11 +378,10 @@ const Admin = () => {
       // Excellent performance achievement
       await updatesService.addUpdate({
         type: "Student Achievement",
-        description: `${student.name} (${student.school}) scored ${
-          student.english >= 95
+        description: `${student.name} (${student.school}) scored ${student.english >= 95
             ? student.english + "% in English"
             : student.math + "% in Math"
-        }! Thanks to your support, students are reaching new heights.`,
+          }! Thanks to your support, students are reaching new heights.`,
         createdAt: Timestamp.now(),
       });
     } else if (englishImprovement >= 5 || mathImprovement >= 5) {
@@ -524,6 +524,8 @@ const Admin = () => {
       }
 
       // 3) Save the structured blog AND set your current preview string with HTML
+
+      res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
       setGenerated(res.blog);
       const html = `
         <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
@@ -604,7 +606,7 @@ const Admin = () => {
             <h1 className="text-4xl font-bold mb-4 text-gradient">
               Admin Dashboard
             </h1>
-          <p className="text-xl text-muted-foreground">
+            <p className="text-xl text-muted-foreground">
               Manage content, track student progress, and create engaging
               stories for your community.
             </p>
@@ -688,7 +690,7 @@ const Admin = () => {
                         </p>
                       </label>
                     </div>
-                    
+
                     {uploadedImages.length > 0 && (
                       <div className="mt-4 space-y-2">
                         <p className="text-sm font-medium">Uploaded Images:</p>
@@ -729,7 +731,7 @@ const Admin = () => {
                   </div>
 
                   {/* Generate Button */}
-                  <Button 
+                  <Button
                     onClick={handleGenerateBlog}
                     disabled={
                       isGenerating || !blogPrompt || uploadedImages.length === 0
@@ -788,27 +790,27 @@ const Admin = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                {generatedBlog ? (
-                  <div className="prose prose-sm max-w-none">
-                    <div className="bg-muted/30 p-6 rounded-lg border">
-                      {/* Render the generated HTML safely into your styled container */}
-                      <div
-                        className="font-sans text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: generatedBlog }}
-                      />
+                  {generatedBlog ? (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="bg-muted/30 p-6 rounded-lg border">
+                        {/* Render the generated HTML safely into your styled container */}
+                        <div
+                          className="font-sans text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg">
                         Your generated story will appear here
                       </p>
                       <p className="text-sm">
                         Upload images and add a description to get started
                       </p>
-                  </div>
-                )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -878,11 +880,10 @@ const Admin = () => {
 
                 {/* Quick Add Grade Form */}
                 <Card
-                  className={`mb-6 ${
-                    editingStudent
+                  className={`mb-6 ${editingStudent
                       ? "bg-blue-50 border-blue-200"
                       : "bg-accent/10 border-accent/20"
-                  }`}
+                    }`}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">
@@ -997,7 +998,7 @@ const Admin = () => {
                           </>
                         ) : (
                           <>
-                        <Save className="w-4 h-4 mr-2" />
+                            <Save className="w-4 h-4 mr-2" />
                             Save & Notify
                           </>
                         )}
@@ -1013,73 +1014,73 @@ const Admin = () => {
                     <p className="text-muted-foreground">Loading students...</p>
                   </div>
                 ) : (
-                <div className="space-y-4">
+                  <div className="space-y-4">
                     {filteredStudents.map((student) => (
-                    <Card key={student.id} className="card-hover">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
+                      <Card key={student.id} className="card-hover">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
                                 {student.name
                                   .split(" ")
                                   .map((n) => n[0])
                                   .join("")}
-                            </div>
-                            <div>
+                              </div>
+                              <div>
                                 <h3 className="font-semibold text-lg">
                                   {student.name}
                                 </h3>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <School className="w-4 h-4" />
-                                  <span>{student.school}</span>
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center space-x-1">
+                                    <School className="w-4 h-4" />
+                                    <span>{student.school}</span>
+                                  </div>
+                                  <span>•</span>
+                                  <span>Class {student.class}</span>
+                                  <span>•</span>
+                                  <span>{student.region}</span>
                                 </div>
-                                <span>•</span>
-                                <span>Class {student.class}</span>
-                                <span>•</span>
-                                <span>{student.region}</span>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="flex items-center space-x-6">
-                            {/* Grades Display */}
-                            <div className="text-center">
+                            <div className="flex items-center space-x-6">
+                              {/* Grades Display */}
+                              <div className="text-center">
                                 <p className="text-2xl font-bold text-primary">
                                   {student.english}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   English
                                 </p>
-                            </div>
-                            <div className="text-center">
+                              </div>
+                              <div className="text-center">
                                 <p className="text-2xl font-bold text-secondary">
                                   {student.math}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   Math
                                 </p>
-                            </div>
+                              </div>
 
-                            {/* Actions */}
-                            <div className="flex space-x-2">
+                              {/* Actions */}
+                              <div className="flex space-x-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleEditStudent(student)}
                                 >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
 
                 {!loading && filteredStudents.length === 0 && (
@@ -1200,11 +1201,10 @@ const Admin = () => {
 
                 {/* Quick Add Donor Form */}
                 <Card
-                  className={`mb-6 ${
-                    editingDonor
+                  className={`mb-6 ${editingDonor
                       ? "bg-green-50 border-green-200"
                       : "bg-accent/10 border-accent/20"
-                  }`}
+                    }`}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">
