@@ -871,7 +871,7 @@ Thank you for being part of this incredible journey of transformation!`;
 
           {/* Donor Management Tab */}
           <TabsContent value="donor-manager">
-            <Tabs defaultValue="donors" className="space-y-4">
+            <Tabs defaultValue="overview" className="space-y-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="overview" className="flex items-center space-x-2">
                   <BadgeDollarSignIcon className="w-4 h-4" />
