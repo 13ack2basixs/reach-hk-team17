@@ -32,7 +32,7 @@ const Home = () => {
             backgroundPosition: 'center 35%'
           }}
         >
-          <div className="absolute inset-0 bg-gradient-hero/90"></div>
+        <div className="absolute inset-0 bg-gradient-hero/90"></div>
         </div>
         <div className="container mx-auto relative z-10 text-center">
           <div className="max-w-4xl mx-auto">
@@ -90,7 +90,7 @@ const Home = () => {
         </div>
       </section>
 
-             {/* Vision Section */}
+      {/* Vision Section */}
        <section className="py-20 px-6 bg-muted/20">
          <div className="container mx-auto">
            <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -164,49 +164,49 @@ const Home = () => {
                    </CardContent>
                  </Card>
                  
-                 <Card className="card-hover border-0 shadow-soft">
-                   <CardContent className="pt-6 flex items-start space-x-4">
-                     <div className="w-12 h-12 flex-shrink-0 rounded-full bg-accent/20 flex items-center justify-center">
-                       <TrendingUp className="w-6 h-6 text-accent-foreground" />
-                     </div>
-                     <div className="flex-1">
-                       <h3 className="text-xl font-semibold mb-2">Our Impacts</h3>
-                       <p className="text-muted-foreground mb-4">
-                         See the real difference we're making through success stories, statistics, and measurable outcomes.
-                       </p>
-                       <Button 
-                         variant="outline" 
-                         size="sm"
-                         onClick={() => scrollToSection('our-impacts')}
-                         className="text-accent-foreground hover:text-accent"
-                       >
-                         Learn More
-                       </Button>
-                     </div>
-                   </CardContent>
-                 </Card>
+                  <Card className="card-hover-brown border-0 shadow-soft">
+                    <CardContent className="pt-6 flex items-start space-x-4">
+                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/20 flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-secondary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2 text-gradient-brown">Our Impacts</h3>
+                        <p className="text-muted-foreground mb-4">
+                          See the real difference we're making through success stories, statistics, and measurable outcomes.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => scrollToSection('our-impacts')}
+                          className="text-secondary hover:text-secondary-foreground"
+                        >
+                          Learn More
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                  
-                 <Card className="card-hover border-0 shadow-soft">
-                   <CardContent className="pt-6 flex items-start space-x-4">
-                     <div className="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/20 flex items-center justify-center">
-                       <Info className="w-6 h-6 text-secondary-foreground" />
-                     </div>
-                     <div className="flex-1">
-                       <h3 className="text-xl font-semibold mb-2">About Us</h3>
-                       <p className="text-muted-foreground mb-4">
-                         Learn about the dedicated team behind REACH's mission to bridge the English proficiency gap.
-                       </p>
-                       <Button 
-                         variant="outline" 
-                         size="sm"
-                         onClick={() => scrollToSection('about-us')}
-                         className="text-secondary hover:text-secondary-foreground"
-                       >
-                         Learn More
-                       </Button>
-                     </div>
-                   </CardContent>
-                 </Card>
+                  <Card className="card-hover-brown border-0 shadow-soft">
+                    <CardContent className="pt-6 flex items-start space-x-4">
+                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/20 flex items-center justify-center">
+                        <Info className="w-6 h-6 text-secondary" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-semibold mb-2 text-gradient-brown">About Us</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Learn about the dedicated team behind REACH's mission to bridge the English proficiency gap.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => scrollToSection('about-us')}
+                          className="text-secondary hover:text-secondary-foreground"
+                        >
+                          Learn More
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                </div>
             </div>
             
@@ -323,23 +323,23 @@ const Home = () => {
                   </CardContent>
                 </Card>
                 
-                <Card className="card-hover border-0 shadow-soft">
-                  <CardContent className="pt-6">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-secondary/20 flex items-center justify-center">
-                      <Users className="w-8 h-8 text-secondary" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-4 text-center">2. EMPOWERING PARENTS</h3>
-                    <p className="text-muted-foreground text-center mb-4">
-                      Students are given home learning booklets for them to practise at home after each
-                      class. Detailed written instructions with videos are provided to parents each week on
-                      how to help their children complete the home learning booklets.
-                    </p>
-                                         <p className="text-sm text-muted-foreground text-center">
-                       Parents are requested to submit completed work to Project REACH for grading. Our
-                       previous programmes have increased parent-children interaction by {'>'}3,000 hours.
+                                 <Card className="card-hover-brown border-0 shadow-soft">
+                   <CardContent className="pt-6">
+                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-secondary/20 flex items-center justify-center">
+                       <Users className="w-8 h-8 text-secondary" />
+                     </div>
+                     <h3 className="text-xl font-semibold mb-4 text-center text-gradient-brown">2. EMPOWERING PARENTS</h3>
+                     <p className="text-muted-foreground text-center mb-4">
+                       Students are given home learning booklets for them to practise at home after each
+                       class. Detailed written instructions with videos are provided to parents each week on
+                       how to help their children complete the home learning booklets.
                      </p>
-                  </CardContent>
-                </Card>
+                                          <p className="text-sm text-muted-foreground text-center">
+                        Parents are requested to submit completed work to Project REACH for grading. Our
+                        previous programmes have increased parent-children interaction by {'>'}3,000 hours.
+                      </p>
+                   </CardContent>
+                 </Card>
                 
                 <Card className="card-hover border-0 shadow-soft">
                   <CardContent className="pt-6">
@@ -361,15 +361,15 @@ const Home = () => {
               </div>
             </div>
             
-            {/* Our Curriculum */}
-            <div className="bg-gradient-to-r from-primary/5 to-secondary/5 p-8 rounded-2xl">
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-4 text-gradient">Our Proprietary Curriculum</h3>
-                <p className="text-lg text-muted-foreground">
-                  Developed by Columbia and Harvard-trained educators, our curriculum comprises five key
-                  elements to prepare underserved children for Primary 1 proficiency requirements:
-                </p>
-              </div>
+                         {/* Our Curriculum */}
+             <div className="bg-gradient-to-r from-primary/5 to-secondary/10 p-8 rounded-2xl">
+               <div className="text-center mb-8">
+                 <h3 className="text-2xl font-bold mb-4 text-gradient-nature">Our Proprietary Curriculum</h3>
+                 <p className="text-lg text-muted-foreground">
+                   Developed by Columbia and Harvard-trained educators, our curriculum comprises five key
+                   elements to prepare underserved children for Primary 1 proficiency requirements:
+                 </p>
+               </div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div className="text-center p-4 bg-white rounded-lg shadow-soft">
@@ -429,18 +429,18 @@ const Home = () => {
                 </CardContent>
               </Card>
               
-              <Card className="text-center card-hover border-0 shadow-soft">
-                <CardContent className="pt-8 pb-8">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-secondary/20 flex items-center justify-center">
-                    <Award className="w-10 h-10 text-secondary" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-secondary mb-2">~39%</h3>
-                  <h4 className="text-lg font-semibold mb-2">INCREASED SIGHT WORD RECOGNITION</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Enhanced ability to recognize high-frequency words instantly for improved reading fluency
-                  </p>
-                </CardContent>
-              </Card>
+                             <Card className="text-center card-hover-brown border-0 shadow-soft">
+                 <CardContent className="pt-8 pb-8">
+                   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-secondary/20 flex items-center justify-center">
+                     <Award className="w-10 h-10 text-secondary" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-secondary mb-2">~39%</h3>
+                   <h4 className="text-lg font-semibold mb-2 text-gradient-brown">INCREASED SIGHT WORD RECOGNITION</h4>
+                   <p className="text-sm text-muted-foreground">
+                     Enhanced ability to recognize high-frequency words instantly for improved reading fluency
+                   </p>
+                 </CardContent>
+               </Card>
             </div>
             
             {/* Academic Performance */}

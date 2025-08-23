@@ -8,52 +8,54 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Earth-tone color palette inspired by nature */
-    --background: 48 15% 97%;
-    --foreground: 28 25% 15%;
+    /* REACH Green & Brown Educational Theme */
+    --background: 60 20% 98%;
+    --foreground: 30 25% 15%;
 
-    --card: 48 25% 98%;
-    --card-foreground: 28 25% 15%;
+    --card: 60 25% 99%;
+    --card-foreground: 30 25% 15%;
 
-    --popover: 48 25% 98%;
-    --popover-foreground: 28 25% 15%;
+    --popover: 60 25% 99%;
+    --popover-foreground: 30 25% 15%;
 
-    /* Warm terracotta primary */
-    --primary: 18 65% 55%;
-    --primary-foreground: 48 15% 97%;
-    --primary-glow: 18 75% 65%;
+    /* Forest Green Primary - Growth & Education */
+    --primary: 120 35% 35%;
+    --primary-foreground: 60 20% 98%;
+    --primary-glow: 120 40% 45%;
 
-    /* Sage green secondary */
-    --secondary: 95 35% 70%;
-    --secondary-foreground: 28 25% 15%;
+    /* Warm Brown Secondary - Stability & Earth */
+    --secondary: 30 45% 55%;
+    --secondary-foreground: 60 20% 98%;
 
-    /* Soft cream muted */
-    --muted: 48 30% 92%;
-    --muted-foreground: 28 15% 45%;
+    /* Soft Cream Muted */
+    --muted: 60 30% 94%;
+    --muted-foreground: 30 15% 45%;
 
-    /* Warm earth accent */
-    --accent: 35 45% 80%;
-    --accent-foreground: 28 25% 15%;
+    /* Sage Green Accent - Nature & Learning */
+    --accent: 100 35% 75%;
+    --accent-foreground: 30 25% 15%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 48 15% 97%;
+    --destructive-foreground: 60 20% 98%;
 
-    --border: 35 20% 88%;
-    --input: 35 20% 88%;
-    --ring: 18 65% 55%;
+    --border: 30 20% 90%;
+    --input: 30 20% 90%;
+    --ring: 120 35% 35%;
 
     --radius: 0.75rem;
 
-    /* Beautiful gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-    --gradient-warm: linear-gradient(135deg, hsl(18 65% 55%), hsl(35 70% 60%));
-    --gradient-earth: linear-gradient(180deg, hsl(48 25% 98%), hsl(35 20% 95%));
-    --gradient-hero: linear-gradient(135deg, hsl(95 35% 70%) 0%, hsl(18 65% 55%) 100%);
+         /* REACH Educational Gradients */
+     --gradient-primary: linear-gradient(135deg, hsl(120 35% 35%), hsl(120 40% 45%));
+     --gradient-warm: linear-gradient(135deg, hsl(120 35% 35%), hsl(30 45% 55%));
+     --gradient-earth: linear-gradient(180deg, hsl(60 25% 99%), hsl(30 20% 95%));
+     --gradient-hero: linear-gradient(135deg, hsl(100 35% 75%) 0%, hsl(120 35% 35%) 100%);
+     --gradient-brown: linear-gradient(135deg, hsl(30 45% 55%), hsl(30 50% 65%));
+     --gradient-nature: linear-gradient(135deg, hsl(120 35% 35%) 0%, hsl(30 45% 55%) 50%, hsl(100 35% 75%) 100%);
     
-    /* Shadows with warmth */
-    --shadow-soft: 0 4px 20px -4px hsl(var(--primary) / 0.15);
-    --shadow-glow: 0 0 30px hsl(var(--primary-glow) / 0.3);
-    --shadow-warm: 0 8px 32px -8px hsl(35 45% 80% / 0.4);
+    /* Educational Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(120 35% 35% / 0.15);
+    --shadow-glow: 0 0 30px hsl(120 40% 45% / 0.3);
+    --shadow-warm: 0 8px 32px -8px hsl(30 45% 55% / 0.4);
     
     /* Animation easing */
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -77,35 +79,35 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* Dark earth tones */
-    --background: 28 25% 8%;
-    --foreground: 48 15% 92%;
+    /* Dark REACH Green & Brown Theme */
+    --background: 30 25% 8%;
+    --foreground: 60 20% 92%;
 
-    --card: 28 25% 10%;
-    --card-foreground: 48 15% 92%;
+    --card: 30 25% 10%;
+    --card-foreground: 60 20% 92%;
 
-    --popover: 28 25% 10%;
-    --popover-foreground: 48 15% 92%;
+    --popover: 30 25% 10%;
+    --popover-foreground: 60 20% 92%;
 
-    --primary: 18 55% 50%;
-    --primary-foreground: 48 15% 97%;
-    --primary-glow: 18 65% 60%;
+    --primary: 120 30% 40%;
+    --primary-foreground: 60 20% 98%;
+    --primary-glow: 120 35% 50%;
 
-    --secondary: 95 25% 25%;
-    --secondary-foreground: 48 15% 92%;
+    --secondary: 30 35% 35%;
+    --secondary-foreground: 60 20% 92%;
 
-    --muted: 28 20% 18%;
-    --muted-foreground: 48 10% 65%;
+    --muted: 30 20% 18%;
+    --muted-foreground: 60 10% 65%;
 
-    --accent: 35 35% 22%;
-    --accent-foreground: 48 15% 92%;
+    --accent: 100 25% 25%;
+    --accent-foreground: 60 20% 92%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 48 15% 97%;
+    --destructive-foreground: 60 20% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 30 20% 20%;
+    --input: 30 20% 20%;
+    --ring: 120 30% 40%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -161,6 +163,22 @@ All colors MUST be HSL.
     -webkit-text-fill-color: transparent;
   }
 
+  /* Brown text gradient */
+  .text-gradient-brown {
+    background: var(--gradient-brown);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Nature text gradient (green to brown) */
+  .text-gradient-nature {
+    background: var(--gradient-nature);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   /* Warm shadow utilities */
   .shadow-warm {
     box-shadow: var(--shadow-warm);
@@ -168,6 +186,11 @@ All colors MUST be HSL.
 
   .shadow-glow {
     box-shadow: var(--shadow-glow);
+  }
+
+  /* Brown shadow utility */
+  .shadow-brown {
+    box-shadow: 0 8px 32px -8px hsl(30 45% 55% / 0.4);
   }
 
   /* Smooth transitions */
@@ -182,5 +205,19 @@ All colors MUST be HSL.
   /* Card hover effects */
   .card-hover {
     @apply transition-spring hover:scale-[1.02] hover:shadow-warm;
+  }
+
+  /* Brown card hover effects */
+  .card-hover-brown {
+    @apply transition-spring hover:scale-[1.02] hover:shadow-brown;
+  }
+
+  /* Brown background utilities */
+  .bg-brown-gradient {
+    background: var(--gradient-brown);
+  }
+
+  .bg-nature-gradient {
+    background: var(--gradient-nature);
   }
 }
