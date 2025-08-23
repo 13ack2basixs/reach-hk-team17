@@ -20,12 +20,15 @@ import {
   Bot,
   Sparkles,
   FileImage,
-  School
+  School,
+  LogOut
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { uploadImages, saveStory } from "@/services/blogService";
 import { callGenerateBlog } from "@/lib/firebase";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 // The structured blog we get back from the Cloud Function
 type Generated = {
@@ -38,8 +41,9 @@ type Generated = {
 };
 
 const Admin = () => {
- 
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { logout } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
@@ -85,6 +89,23 @@ const Admin = () => {
 
   const schools = ["Sunshine Kindergarten", "Rainbow Learning Center", "Hope Valley School", "Bright Futures Academy"];
   const regions = ["Sham Shui Po", "Kwun Tong", "Tin Shui Wai", "Tuen Mun"];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the admin dashboard",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -200,11 +221,22 @@ const Admin = () => {
     <div className="min-h-screen py-8 px-6">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gradient">Admin Dashboard</h1>
-          <p className="text-xl text-muted-foreground">
-            Manage content, track student progress, and create engaging stories for your community.
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-bold mb-4 text-gradient">Admin Dashboard</h1>
+            <p className="text-xl text-muted-foreground">
+              Manage content, track student progress, and create engaging stories for your community.
+            </p>
+          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline" 
+            size="sm"
+            className="flex items-center space-x-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="blog-creator" className="space-y-6">
