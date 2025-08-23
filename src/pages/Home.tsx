@@ -9,7 +9,7 @@ import communitySupport from "@/assets/community.jpg";
 const Home = () => {
   const stats = [
     { icon: Users, label: "Children Served", value: "2,500+" },
-    { icon: GraduationCap, label: "Partner Schools", value: "45" },
+    { icon: GraduationCap, label: "Partner Schools", value: "4" },
     { icon: Heart, label: "Active Donors", value: "300+" },
     { icon: Award, label: "Success Stories", value: "150+" },
   ];
