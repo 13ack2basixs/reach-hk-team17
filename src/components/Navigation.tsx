@@ -29,12 +29,15 @@ const Navigation = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-            <Heart className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-glow">
+            <img 
+              src="favicon.ico" 
+              alt="REACH Logo" 
+              className="w-10 h-10 object-contain"
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gradient">REACH</h1>
-            <p className="text-xs text-muted-foreground">Building Brighter Futures</p>
           </div>
         </Link>
 
