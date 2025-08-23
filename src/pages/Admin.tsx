@@ -21,7 +21,7 @@ import {
   Sparkles,
   FileImage,
   School,
-  LogOut
+  LogOut,
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -307,7 +307,7 @@ const Admin = () => {
     }
   };
 
-const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await logout();
       toast({
@@ -322,8 +322,7 @@ const handleLogout = async () => {
         variant: "destructive",
       });
     }
-}
-
+  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -344,25 +343,6 @@ const handleLogout = async () => {
       return;
     }
 
-    setIsGenerating(true);
-
-    // Simulate AI blog generation
-    setTimeout(() => {
-      const generatedContent = `# A Heartwarming Day at Our Partner School
-
-${blogPrompt}
-
-## The Magic of Learning
-
-Today was filled with incredible moments as we witnessed the power of education in action. The children's enthusiasm and curiosity remind us why REACH's mission is so important.
-
-### Key Highlights:
-
-- **Interactive Learning**: Students engaged with new English vocabulary through fun activities
-- **Creative Expression**: Art and storytelling combined to help children express themselves
-- **Community Support**: Thanks to generous donors, we provided new learning materials
-
-### Student Achievements:
     try {
       setIsGenerating(true);
       setGenerated(null);
@@ -370,11 +350,14 @@ Today was filled with incredible moments as we witnessed the power of education 
 
       // 1) Upload images to Firebase Storage and collect public URLs
       const uploaded = await uploadImages(uploadedImages);
-      const urls = uploaded.map(u => u.url);
+      const urls = uploaded.map((u) => u.url);
       setUploadedImageUrls(urls);
 
       // 2) Call your Cloud Function (OpenAI behind the scenes)
-      const res = await callGenerateBlog({ prompt: blogPrompt, imageUrls: urls });
+      const res = await callGenerateBlog({
+        prompt: blogPrompt,
+        imageUrls: urls,
+      });
 
       if (!res.success || !res.blog) {
         throw new Error(res.error || "Generation failed");
@@ -391,6 +374,7 @@ Today was filled with incredible moments as we witnessed the power of education 
         </div>
       `;
       setGeneratedBlog(html);
+
       toast({
         title: "Blog Generated Successfully!",
         description: "Your AI-generated blog post is ready for review",
@@ -406,7 +390,6 @@ Today was filled with incredible moments as we witnessed the power of education 
       setIsGenerating(false);
     }
   };
-
 
   const publishBlog = async () => {
     if (!generated) {
@@ -427,7 +410,7 @@ Today was filled with incredible moments as we witnessed the power of education 
         tags: generated.tags,
         category: generated.category,
         readingMinutes: generated.readingMinutes,
-        images: uploadedImageUrls.map(url => ({ url })),
+        images: uploadedImageUrls.map((url) => ({ url })),
         author: "REACH Team",
       });
 
@@ -452,29 +435,23 @@ Today was filled with incredible moments as we witnessed the power of education 
     }
   };
 
-
   return (
     <div className="min-h-screen py-8 px-6">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-gradient">
-            Admin Dashboard
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Manage content, track student progress, and create engaging stories
-            for your community.
-          </p>
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h1 className="text-4xl font-bold mb-4 text-gradient">Admin Dashboard</h1>
+            <h1 className="text-4xl font-bold mb-4 text-gradient">
+              Admin Dashboard
+            </h1>
             <p className="text-xl text-muted-foreground">
-              Manage content, track student progress, and create engaging stories for your community.
+              Manage content, track student progress, and create engaging
+              stories for your community.
             </p>
           </div>
-          <Button 
+          <Button
             onClick={handleLogout}
-            variant="outline" 
+            variant="outline"
             size="sm"
             className="flex items-center space-x-2"
           >
@@ -645,22 +622,26 @@ Today was filled with incredible moments as we witnessed the power of education 
                 </CardHeader>
                 <CardContent>
                   {generatedBlog ? (
-                  <div className="prose prose-sm max-w-none">
-                    <div className="bg-muted/30 p-6 rounded-lg border">
-                      {/* Render the generated HTML safely into your styled container */}
-                      <div
-                        className="font-sans text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: generatedBlog }}
-                      />
+                    <div className="prose prose-sm max-w-none">
+                      <div className="bg-muted/30 p-6 rounded-lg border">
+                        {/* Render the generated HTML safely into your styled container */}
+                        <div
+                          className="font-sans text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-lg">Your generated story will appear here</p>
-                    <p className="text-sm">Upload images and add a description to get started</p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg">
+                        Your generated story will appear here
+                      </p>
+                      <p className="text-sm">
+                        Upload images and add a description to get started
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
