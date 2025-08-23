@@ -32,7 +32,7 @@ const Home = () => {
             backgroundPosition: 'center 35%'
           }}
         >
-        <div className="absolute inset-0 bg-gradient-hero/90"></div>
+        <div className="absolute inset-0 bg-black/50"></div>
         </div>
         <div className="container mx-auto relative z-10 text-center">
           <div className="max-w-4xl mx-auto">
@@ -340,7 +340,7 @@ const Home = () => {
                 
                 <Card className="card-hover border-0 shadow-soft">
                   <CardContent className="pt-6">
-                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/20 flex items-center justify-center">
+                    <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
                       <Heart className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="text-xl font-semibold mb-4 text-center">3. EMPOWERING KINDERGARTENS WITH DATA AND TECHNOLOGY</h3>
