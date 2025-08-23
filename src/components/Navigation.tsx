@@ -37,7 +37,7 @@ const Navigation = () => {
             />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gradient">REACH</h1>
+            <h1 className="text-xl font-bold text-gradient">PROJECT REACH</h1>
           </div>
         </Link>
 

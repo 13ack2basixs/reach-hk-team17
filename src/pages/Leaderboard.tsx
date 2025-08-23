@@ -184,7 +184,7 @@ const Leaderboard = () => {
   return (
     <div className="min-h-screen py-8 px-6 bg-gray-100 dark:bg-gray-900">
       <div className="container mx-auto max-w-6xl">
-        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-8 text-center">
+        <h1 className="text-4xl font-bold mb-4 text-gradient text-center">
           Donor Leaderboard
         </h1>
 
