@@ -22,6 +22,10 @@ import {
   FileImage,
   School,
   LogOut,
+  BadgeDollarSignIcon,
+  User,
+  Mail,
+  DollarSign,
 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +49,15 @@ type Generated = {
   tags: string[];
   category: string;
   readingMinutes: number;
+};
+
+type Donor = {
+  id?: string;
+  name: string;
+  email: string;
+  amount: number;
+  school: string;
+  createdAt?: any;
 };
 
 const Admin = () => {
@@ -75,6 +88,17 @@ const Admin = () => {
     message: "",
     school: "",
     impactMetric: "",
+  });
+
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [donorSearchTerm, setDonorSearchTerm] = useState("");
+  const [selectedDonorSchool, setSelectedDonorSchool] = useState("");
+  const [editingDonor, setEditingDonor] = useState<Donor | null>(null);
+  const [donorForm, setDonorForm] = useState({
+    name: "",
+    email: "",
+    amount: "",
+    school: "",
   });
 
   // Quick Grade Entry Form State
@@ -116,6 +140,35 @@ const Admin = () => {
     return () => unsubscribe();
   }, [toast]);
 
+  // Mock donor data - replace with actual service calls
+  useEffect(() => {
+    // Mock donor data for demonstration
+    const mockDonors: Donor[] = [
+      {
+        id: "1",
+        name: "John Smith",
+        email: "john@example.com",
+        amount: 500,
+        school: "Sunshine Kindergarten",
+      },
+      {
+        id: "2",
+        name: "Sarah Johnson",
+        email: "sarah@example.com",
+        amount: 750,
+        school: "Rainbow Learning Center",
+      },
+      {
+        id: "3",
+        name: "Mike Chen",
+        email: "mike@example.com",
+        amount: 300,
+        school: "Hope Valley School",
+      },
+    ];
+    setDonors(mockDonors);
+  }, []);
+
   // Filter students
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -127,6 +180,113 @@ const Admin = () => {
 
     return matchesSearch && matchesSchool && matchesRegion;
   });
+
+  // Filter donors
+  const filteredDonors = donors.filter((donor) => {
+    const matchesSearch =
+      donor.name.toLowerCase().includes(donorSearchTerm.toLowerCase()) ||
+      donor.email.toLowerCase().includes(donorSearchTerm.toLowerCase());
+    const matchesSchool =
+      !selectedDonorSchool || donor.school === selectedDonorSchool;
+
+    return matchesSearch && matchesSchool;
+  });
+
+  // Handle donor form submission
+  const handleDonorSubmit = async () => {
+    if (
+      !donorForm.name ||
+      !donorForm.email ||
+      !donorForm.amount ||
+      !donorForm.school
+    ) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const amount = parseFloat(donorForm.amount);
+
+      if (editingDonor && editingDonor.id) {
+        // Update existing donor
+        const updatedDonor = {
+          ...editingDonor,
+          name: donorForm.name,
+          email: donorForm.email,
+          amount: amount,
+          school: donorForm.school,
+        };
+
+        setDonors(
+          donors.map((d) => (d.id === editingDonor.id ? updatedDonor : d))
+        );
+
+        toast({
+          title: "Donor Updated!",
+          description: `${donorForm.name}'s information has been updated successfully.`,
+        });
+      } else {
+        // Add new donor
+        const newDonor: Donor = {
+          id: Date.now().toString(), // Mock ID - replace with actual service
+          name: donorForm.name,
+          email: donorForm.email,
+          amount: amount,
+          school: donorForm.school,
+          createdAt: new Date(),
+        };
+
+        setDonors([...donors, newDonor]);
+
+        toast({
+          title: "New Donor Added!",
+          description: `${donorForm.name} has been added to the donor list.`,
+        });
+      }
+
+      // Reset form
+      setDonorForm({
+        name: "",
+        email: "",
+        amount: "",
+        school: "",
+      });
+      setEditingDonor(null);
+    } catch (error) {
+      console.error("Error saving donor:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save donor information",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleEditDonor = (donor: Donor) => {
+    setEditingDonor(donor);
+    setDonorForm({
+      name: donor.name,
+      email: donor.email,
+      amount: donor.amount.toString(),
+      school: donor.school,
+    });
+  };
+
+  const handleDeleteDonor = (donorId: string) => {
+    setDonors(donors.filter((d) => d.id !== donorId));
+    toast({
+      title: "Donor Removed",
+      description: "Donor has been removed from the list.",
+    });
+  };
 
   // Handle form submission
   const handleQuickGradeSubmit = async () => {
@@ -461,7 +621,7 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="blog-creator" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger
               value="blog-creator"
               className="flex items-center space-x-2"
@@ -482,6 +642,13 @@ const Admin = () => {
             >
               <BookOpen className="w-4 h-4" />
               <span>Content Manager</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="donor-manager"
+              className="flex items-center space-x-2"
+            >
+              <BadgeDollarSignIcon className="w-4 h-4" />
+              <span>Donor Management</span>
             </TabsTrigger>
           </TabsList>
 
@@ -981,6 +1148,261 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Donor Management Tab */}
+          <TabsContent value="donor-manager">
+            <Card className="border-0 shadow-soft">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <BadgeDollarSignIcon className="w-6 h-6 text-primary" />
+                    <span>Donor Management</span>
+                  </div>
+                  <Badge variant="outline" className="text-sm">
+                    {donors.length} Active Donors
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Search and Filter */}
+                <div className="grid md:grid-cols-3 gap-4 mb-6">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search donors..."
+                      className="pl-10"
+                      value={donorSearchTerm}
+                      onChange={(e) => setDonorSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <select
+                    className="px-3 py-2 border border-input bg-background rounded-md"
+                    value={selectedDonorSchool}
+                    onChange={(e) => setSelectedDonorSchool(e.target.value)}
+                  >
+                    <option value="">All Schools</option>
+                    {schools.map((school) => (
+                      <option key={school} value={school}>
+                        {school}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="text-right">
+                    <Badge variant="secondary" className="text-lg px-4 py-2">
+                      Total: $
+                      {donors
+                        .reduce((sum, donor) => sum + donor.amount, 0)
+                        .toLocaleString()}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Quick Add Donor Form */}
+                <Card
+                  className={`mb-6 ${
+                    editingDonor
+                      ? "bg-green-50 border-green-200"
+                      : "bg-accent/10 border-accent/20"
+                  }`}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <span>
+                        {editingDonor
+                          ? `Editing ${editingDonor.name}`
+                          : "Add New Donor"}
+                      </span>
+                      {editingDonor && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingDonor(null);
+                            setDonorForm({
+                              name: "",
+                              email: "",
+                              amount: "",
+                              school: "",
+                            });
+                          }}
+                        >
+                          Cancel Edit
+                        </Button>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid md:grid-cols-5 gap-4">
+                      <div className="relative">
+                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Donor Name"
+                          className="pl-10"
+                          value={donorForm.name}
+                          onChange={(e) =>
+                            setDonorForm({
+                              ...donorForm,
+                              name: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Email Address"
+                          type="email"
+                          className="pl-10"
+                          value={donorForm.email}
+                          onChange={(e) =>
+                            setDonorForm({
+                              ...donorForm,
+                              email: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="relative">
+                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Donation Amount"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          className="pl-10"
+                          value={donorForm.amount}
+                          onChange={(e) =>
+                            setDonorForm({
+                              ...donorForm,
+                              amount: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <select
+                        className="px-3 py-2 border border-input bg-background rounded-md"
+                        value={donorForm.school}
+                        onChange={(e) =>
+                          setDonorForm({
+                            ...donorForm,
+                            school: e.target.value,
+                          })
+                        }
+                      >
+                        <option value="">Select School</option>
+                        {schools.map((school) => (
+                          <option key={school} value={school}>
+                            {school}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        className="bg-primary hover:bg-primary/90"
+                        onClick={handleDonorSubmit}
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : editingDonor ? (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Update Donor
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Donor
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Donors List */}
+                <div className="space-y-4">
+                  {filteredDonors.map((donor) => (
+                    <Card key={donor.id} className="card-hover">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                              {donor.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {donor.name}
+                              </h3>
+                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                <div className="flex items-center space-x-1">
+                                  <Mail className="w-4 h-4" />
+                                  <span>{donor.email}</span>
+                                </div>
+                                <span>•</span>
+                                <div className="flex items-center space-x-1">
+                                  <School className="w-4 h-4" />
+                                  <span>{donor.school}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-6">
+                            {/* Donation Amount */}
+                            <div className="text-center">
+                              <p className="text-2xl font-bold text-green-600">
+                                ${donor.amount.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Donated
+                              </p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditDonor(donor)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  donor.id && handleDeleteDonor(donor.id)
+                                }
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {filteredDonors.length === 0 && (
+                  <div className="text-center py-8">
+                    <BadgeDollarSignIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      No donors found
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {donorSearchTerm || selectedDonorSchool
+                        ? "Try adjusting your search criteria or add a new donor."
+                        : "Start by adding your first donor using the form above."}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
