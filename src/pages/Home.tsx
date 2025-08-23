@@ -376,13 +376,13 @@ const Home = () => {
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-soft">
-                  <h4 className="font-semibold text-secondary mb-2">Vocabulary Building</h4>
+                  <h4 className="font-semibold text-primary mb-2">Vocabulary Building</h4>
                   <p className="text-sm text-muted-foreground">
                     Age-appropriate vocabulary development through interactive activities
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-soft">
-                  <h4 className="font-semibold text-accent mb-2">Sight Words</h4>
+                  <h4 className="font-semibold text-primary mb-2">Sight Words</h4>
                   <p className="text-sm text-muted-foreground">
                     High-frequency word recognition for reading fluency
                   </p>
@@ -394,7 +394,7 @@ const Home = () => {
                   </p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg shadow-soft">
-                  <h4 className="font-semibold text-secondary mb-2">Assessment & Progress</h4>
+                  <h4 className="font-semibold text-primary mb-2">Assessment & Progress</h4>
                   <p className="text-sm text-muted-foreground">
                     Regular evaluation and progress tracking through our app
                   </p>
@@ -432,7 +432,7 @@ const Home = () => {
                      <Award className="w-10 h-10 text-secondary" />
                    </div>
                    <h3 className="text-2xl font-bold text-secondary mb-2">~39%</h3>
-                   <h4 className="text-lg font-semibold mb-2 text-gradient-brown">INCREASED SIGHT WORD RECOGNITION</h4>
+                   <h4 className="text-lg font-semibold mb-2">INCREASED SIGHT WORD RECOGNITION</h4>
                    <p className="text-sm text-muted-foreground">
                      Enhanced ability to recognize high-frequency words instantly for improved reading fluency
                    </p>
@@ -579,10 +579,10 @@ const Home = () => {
               <div className="lg:order-1">
                 <div className="flex items-center gap-4 mb-6">
                   <h3 className="text-2xl font-semibold">Quincy Tse</h3>
-                  <span className="px-3 py-1 bg-secondary/10 text-secondary text-sm font-medium rounded-full">Co-founder</span>
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">Co-founder</span>
                 </div>
                 <div className="mb-4">
-                  <span className="px-3 py-1 bg-accent/10 text-accent text-sm font-medium rounded-full">Director of Outreach</span>
+                  <span className="px-3 py-1 bg-secondary/10 text-secondary text-sm font-medium rounded-full">Director of Outreach</span>
                 </div>
                 <p className="text-muted-foreground mb-6 leading-relaxed">
                   Quincy Tse has 15 years of experience in global Fintechs specialising in offering financial data
@@ -709,7 +709,7 @@ const Home = () => {
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="text-center">
-                <h3 className="text-xl font-semibold mb-4 text-primary">Sponsors</h3>
+                <h3 className="text-xl font-semibold mb-4 text-secondary">Sponsors</h3>
                 <div className="bg-white p-8 rounded-xl shadow-soft min-h-[200px] flex items-center justify-center">
                   <p className="text-muted-foreground">Coming Soon</p>
                 </div>
@@ -723,7 +723,7 @@ const Home = () => {
               </div>
               
               <div className="text-center">
-                <h3 className="text-xl font-semibold mb-4 text-accent">Institutions</h3>
+                <h3 className="text-xl font-semibold mb-4 text-secondary">Institutions</h3>
                 <div className="bg-white p-8 rounded-xl shadow-soft min-h-[200px] flex items-center justify-center">
                   <p className="text-muted-foreground">Coming Soon</p>
                 </div>
