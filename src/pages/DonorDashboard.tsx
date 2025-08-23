@@ -48,7 +48,7 @@ const DonorDashboard = () => {
     streak: 8,
     donations: 16,
     badges: ["Monthly Hero", "Consistent Giver", "School Supporter"],
-    nextLevel: "Diamond",
+    nextLevel: "Flowering Tree",
     nextLevelAmount: 5000,
     impactStats: {
       studentsHelped: 45,
