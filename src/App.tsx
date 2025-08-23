@@ -12,6 +12,7 @@ import Admin from "./pages/Admin";
 import DonorDashboard from "./pages/DonorDashboard";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import StoryDetail from "@/pages/StoryDetail";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -19,9 +20,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <QueryClientProvider client={queryClient}>      
     <AuthProvider>
       <TooltipProvider>
+        <NotificationProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
@@ -30,7 +32,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/schools" element={<Schools />} />
             <Route path="/blogs" element={<Blogs />} />
-             <Route path="/stories/:id" element={<StoryDetail />} />
+            <Route path="/stories/:id" element={<StoryDetail />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/admin" element={
               <ProtectedRoute>
@@ -42,7 +44,8 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
+      </NotificationProvider>
+     </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
