@@ -13,6 +13,7 @@ const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
  * - Wrap other lines/paragraph chunks in <p>.
  */
 function coerceToHtml(raw: string): string {
+  console.log(raw)
   const s = (raw || "").trim();
   if (!s) return "";
 
