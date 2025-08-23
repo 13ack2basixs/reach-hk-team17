@@ -180,6 +180,8 @@ const Blogs = () => {
           </p>
         </div>
 
+
+
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">

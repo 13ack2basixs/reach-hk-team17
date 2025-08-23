@@ -21,468 +21,98 @@ import {
   Sparkles,
   FileImage,
   School,
-  LogOut,
-  BadgeDollarSignIcon,
-  User,
-  Mail,
-  DollarSign,
+  Megaphone,
+  Calendar,
+  Star
 } from "lucide-react";
-
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { useEffect } from "react";
-import { studentService, Student } from "@/services/studentServices";
-import { useNotifications } from "../contexts/NotificationContext";
-import { Timestamp } from "firebase/firestore";
-import { CheckCircle, Loader2 } from "lucide-react";
-import { updatesService, Update } from "@/services/updateServices";
-import { uploadImages, saveStory } from "@/services/blogService";
-import { callGenerateBlog } from "@/lib/firebase";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-
-// The structured blog we get back from the Cloud Function
-type Generated = {
-  title: string;
-  summary: string;
-  bodyHtml: string;
-  tags: string[];
-  category: string;
-  readingMinutes: number;
-};
-
-type Donor = {
-  id?: string;
-  name: string;
-  email: string;
-  amount: number;
-  school: string;
-  createdAt?: any;
-};
+import { useAnnouncements } from "@/contexts/AnnouncementContext";
 
 const Admin = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { logout } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
   const [generatedBlog, setGeneratedBlog] = useState("");
-  // Where the uploaded images end up (download URLs for preview/publish)
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
-  // Keep existing string preview, but also store the structured result:
-  const [generated, setGenerated] = useState<Generated | null>(null);
 
-  // Real Firebase state management
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [programUpdates, setProgramUpdates] = useState<Update[]>([]);
-  const [newUpdate, setNewUpdate] = useState({
-    type: "Program Update" as const,
+  // Announcement state
+  const [announcements, setAnnouncements] = useState([
+    {
+      id: 1,
+      title: "Lily passed her first English test!",
+      content: "We're so proud of Lily from Sunshine Kindergarten! She scored 95% on her first English vocabulary test. Her hard work and dedication are truly inspiring.",
+      studentName: "Lily",
+      school: "Sunshine Kindergarten",
+      date: "2024-01-15",
+      isActive: true,
+      priority: "high"
+    },
+    {
+      id: 2,
+      title: "Tommy's reading progress amazes everyone!",
+      content: "Tommy has improved his reading skills dramatically! He can now read simple English books independently. His confidence has grown so much.",
+      studentName: "Tommy",
+      school: "Rainbow Learning Center",
+      date: "2024-01-14",
+      isActive: true,
+      priority: "medium"
+    },
+    {
+      id: 3,
+      title: "Emma leads her first English conversation!",
+      content: "Emma took the lead in today's English conversation class! She helped other students with pronunciation and showed great leadership skills.",
+      studentName: "Emma",
+      school: "Hope Valley School",
+      date: "2024-01-13",
+      isActive: true,
+      priority: "medium"
+    }
+  ]);
+
+  const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
-    message: "",
-    school: "",
-    impactMetric: "",
-  });
-
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [donorSearchTerm, setDonorSearchTerm] = useState("");
-  const [selectedDonorSchool, setSelectedDonorSchool] = useState("");
-  const [editingDonor, setEditingDonor] = useState<Donor | null>(null);
-  const [donorForm, setDonorForm] = useState({
-    name: "",
-    email: "",
-    amount: "",
-    school: "",
-  });
-
-  // Quick Grade Entry Form State
-  const [quickGradeForm, setQuickGradeForm] = useState({
+    content: "",
     studentName: "",
     school: "",
-    class: "",
-    englishGrade: "",
-    mathGrade: "",
+    priority: "medium"
   });
-
-  // Load students from Firebase
-  useEffect(() => {
-    const loadStudents = async () => {
-      try {
-        setLoading(true);
-        const studentsData = await studentService.getStudents();
-        setStudents(studentsData);
-      } catch (error) {
-        console.error("Error loading students:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load students data",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStudents();
-
-    // Set up real-time listener
-    const unsubscribe = studentService.subscribeToStudents((studentsData) => {
-      setStudents(studentsData);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [toast]);
-
-  // Mock donor data - replace with actual service calls
-  useEffect(() => {
-    // Mock donor data for demonstration
-    const mockDonors: Donor[] = [
-      {
-        id: "1",
-        name: "John Smith",
-        email: "john@example.com",
-        amount: 500,
-        school: "Sunshine Kindergarten",
-      },
-      {
-        id: "2",
-        name: "Sarah Johnson",
-        email: "sarah@example.com",
-        amount: 750,
-        school: "Rainbow Learning Center",
-      },
-      {
-        id: "3",
-        name: "Mike Chen",
-        email: "mike@example.com",
-        amount: 300,
-        school: "Hope Valley School",
-      },
-    ];
-    setDonors(mockDonors);
-  }, []);
-
-  // Filter students
-  const filteredStudents = students.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.class.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSchool = !selectedSchool || student.school === selectedSchool;
-    const matchesRegion = !selectedRegion || student.region === selectedRegion;
-
-    return matchesSearch && matchesSchool && matchesRegion;
-  });
-
-  // Filter donors
-  const filteredDonors = donors.filter((donor) => {
-    const matchesSearch =
-      donor.name.toLowerCase().includes(donorSearchTerm.toLowerCase()) ||
-      donor.email.toLowerCase().includes(donorSearchTerm.toLowerCase());
-    const matchesSchool =
-      !selectedDonorSchool || donor.school === selectedDonorSchool;
-
-    return matchesSearch && matchesSchool;
-  });
-
-  // Handle donor form submission
-  const handleDonorSubmit = async () => {
-    if (
-      !donorForm.name ||
-      !donorForm.email ||
-      !donorForm.amount ||
-      !donorForm.school
-    ) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const amount = parseFloat(donorForm.amount);
-
-      if (editingDonor && editingDonor.id) {
-        // Update existing donor
-        const updatedDonor = {
-          ...editingDonor,
-          name: donorForm.name,
-          email: donorForm.email,
-          amount: amount,
-          school: donorForm.school,
-        };
-
-        setDonors(
-          donors.map((d) => (d.id === editingDonor.id ? updatedDonor : d))
-        );
-
-        toast({
-          title: "Donor Updated!",
-          description: `${donorForm.name}'s information has been updated successfully.`,
-        });
-      } else {
-        // Add new donor
-        const newDonor: Donor = {
-          id: Date.now().toString(), // Mock ID - replace with actual service
-          name: donorForm.name,
-          email: donorForm.email,
-          amount: amount,
-          school: donorForm.school,
-          createdAt: new Date(),
-        };
-
-        setDonors([...donors, newDonor]);
-
-        toast({
-          title: "New Donor Added!",
-          description: `${donorForm.name} has been added to the donor list.`,
-        });
-      }
-
-      // Reset form
-      setDonorForm({
-        name: "",
-        email: "",
-        amount: "",
-        school: "",
-      });
-      setEditingDonor(null);
-    } catch (error) {
-      console.error("Error saving donor:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save donor information",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEditDonor = (donor: Donor) => {
-    setEditingDonor(donor);
-    setDonorForm({
-      name: donor.name,
-      email: donor.email,
-      amount: donor.amount.toString(),
-      school: donor.school,
-    });
-  };
-
-  const handleDeleteDonor = (donorId: string) => {
-    setDonors(donors.filter((d) => d.id !== donorId));
-    toast({
-      title: "Donor Removed",
-      description: "Donor has been removed from the list.",
-    });
-  };
-
-  // Handle form submission
-  const handleQuickGradeSubmit = async () => {
-    if (
-      !quickGradeForm.studentName ||
-      !quickGradeForm.school ||
-      !quickGradeForm.englishGrade ||
-      !quickGradeForm.mathGrade
-    ) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setSaving(true);
-
-    try {
-      const englishGrade = parseInt(quickGradeForm.englishGrade);
-      const mathGrade = parseInt(quickGradeForm.mathGrade);
-
-      // Check if student already exists
-      const existingStudent = students.find(
-        (s) =>
-          s.name.toLowerCase() === quickGradeForm.studentName.toLowerCase() &&
-          s.school === quickGradeForm.school
-      );
-
-      if (existingStudent && existingStudent.id) {
-        // Update existing student
-        await studentService.updateStudentGrades(existingStudent.id, {
-          english: englishGrade,
-          math: mathGrade,
-        });
-
-        toast({
-          title: "Student Updated!",
-          description: `${quickGradeForm.studentName}'s grades have been updated and donors will be notified!`,
-        });
-      } else {
-        // Add new student
-        await studentService.addStudent({
-          name: quickGradeForm.studentName,
-          school: quickGradeForm.school,
-          class: quickGradeForm.class,
-          english: englishGrade,
-          math: mathGrade,
+        
+  const [students] = useState([
+    {
+      id: 1,
+      name: "Emma Wong",
+      school: "Sunshine Kindergarten",
+      class: "K2A",
+      region: "Sham Shui Po",
+      englishGrade: 85,
+      mathGrade: 78,
+      lastUpdated: "2024-01-15"
+    },
+    {
+      id: 2,
+      name: "Tommy Chen",
+      school: "Rainbow Learning Center", 
+      class: "K1B",
+      region: "Kwun Tong",
+      englishGrade: 92,
+      mathGrade: 88,
+      lastUpdated: "2024-01-14"
+    },
+    {
+      id: 3,
+      name: "Lisa Park",
+      school: "Hope Valley School",
+      class: "K3A", 
       region: "Tin Shui Wai",
-        });
-
-        toast({
-          title: "New Student Added!",
-          description: `${quickGradeForm.studentName} has been added and donors will be notified!`,
-        });
-      }
-
-      // Reset form
-      setQuickGradeForm({
-        studentName: "",
-        school: "",
-        class: "",
-        englishGrade: "",
-        mathGrade: "",
-      });
-    } catch (error) {
-      console.error("Error saving student:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save student data",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
+      englishGrade: 76,
+      mathGrade: 82,
+      lastUpdated: "2024-01-13"
     }
-  };
+  ]);
 
-  const checkForAchievements = async (
-    student: Student,
-    previousGrades: { english: number; math: number }
-  ) => {
-    const englishImprovement = student.english - previousGrades.english;
-    const mathImprovement = student.math - previousGrades.math;
-
-    // Check for significant achievements
-    if (student.english >= 95 || student.math >= 95) {
-      // Excellent performance achievement
-      await updatesService.addUpdate({
-        type: "Student Achievement",
-        description: `${student.name} (${student.school}) scored ${
-          student.english >= 95
-            ? student.english + "% in English"
-            : student.math + "% in Math"
-        }! Thanks to your support, students are reaching new heights.`,
-        createdAt: Timestamp.now(),
-      });
-    } else if (englishImprovement >= 5 || mathImprovement >= 5) {
-      // Significant improvement achievement
-      const subject = englishImprovement >= 5 ? "English" : "Math";
-      const improvement =
-        englishImprovement >= 5 ? englishImprovement : mathImprovement;
-
-      await updatesService.addUpdate({
-        type: "Student Achievement",
-        description: `${student.name} (${student.school}) improved their ${subject} grade by ${improvement} points! Your donations are making a real difference in children's learning journey.`,
-        createdAt: Timestamp.now(),
-      });
-    }
-  };
-
-  const schools = [
-    "Sunshine Kindergarten",
-    "Rainbow Learning Center",
-    "Hope Valley School",
-    "Bright Futures Academy",
-  ];
+  const schools = ["Sunshine Kindergarten", "Rainbow Learning Center", "Hope Valley School", "Bright Futures Academy"];
   const regions = ["Sham Shui Po", "Kwun Tong", "Tin Shui Wai", "Tuen Mun"];
-
-  const handleEditStudent = (student: Student) => {
-    setEditingStudent(student);
-    setQuickGradeForm({
-      studentName: student.name,
-      school: student.school,
-      class: student.class,
-      englishGrade: student.english.toString(),
-      mathGrade: student.math.toString(),
-    });
-  };
-
-  const handleUpdateStudent = async () => {
-    if (!editingStudent || !editingStudent.id) return;
-
-    const englishGrade = parseInt(quickGradeForm.englishGrade);
-    const mathGrade = parseInt(quickGradeForm.mathGrade);
-    const previousGrades = {
-      english: editingStudent.english,
-      math: editingStudent.math,
-    };
-
-    try {
-      setSaving(true);
-      await studentService.updateStudentGrades(editingStudent.id, {
-        english: englishGrade,
-        math: mathGrade,
-      });
-
-      // Check for achievements after updating
-      const updatedStudent = {
-        ...editingStudent,
-        english: englishGrade,
-        math: mathGrade,
-      };
-      await checkForAchievements(updatedStudent, previousGrades);
-
-      toast({
-        title: "Student Updated!",
-        description: `${editingStudent.name}'s grades have been updated and donors will be notified!`,
-      });
-
-      setEditingStudent(null);
-      setQuickGradeForm({
-        studentName: "",
-        school: "",
-        class: "",
-        englishGrade: "",
-        mathGrade: "",
-      });
-    } catch (error) {
-      console.error("Error updating student:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update student",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of the admin dashboard",
-      });
-      navigate("/");
-    } catch (error) {
-      toast({
-        title: "Logout failed",
-        description: "There was an error logging out. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -503,152 +133,135 @@ const Admin = () => {
       return;
     }
 
-    try {
-      setIsGenerating(true);
-      setGenerated(null);
-      setGeneratedBlog(""); // clear the right pane
+    setIsGenerating(true);
+    
+    // Simulate AI blog generation
+    setTimeout(() => {
+      const generatedContent = `# A Heartwarming Day at Our Partner School
 
-      // 1) Upload images to Firebase Storage and collect public URLs
-      const uploaded = await uploadImages(uploadedImages);
-      const urls = uploaded.map((u) => u.url);
-      setUploadedImageUrls(urls);
+${blogPrompt}
 
-      // 2) Call your Cloud Function (OpenAI behind the scenes)
-      const res = await callGenerateBlog({
-        prompt: blogPrompt,
-        imageUrls: urls,
-      });
+## The Magic of Learning
 
-      if (!res.success || !res.blog) {
-        throw new Error(res.error || "Generation failed");
-      }
+Today was filled with incredible moments as we witnessed the power of education in action. The children's enthusiasm and curiosity remind us why REACH's mission is so important.
 
-      // 3) Save the structured blog AND set your current preview string with HTML
-      setGenerated(res.blog);
-      const html = `
-        <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
-        <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
-        ${res.blog.bodyHtml}
-        <div class="mt-4 text-xs text-muted-foreground">
-          Category: ${res.blog.category} • ${res.blog.readingMinutes} min read
-        </div>
-      `;
-      setGeneratedBlog(html);
+### Key Highlights:
 
+- **Interactive Learning**: Students engaged with new English vocabulary through fun activities
+- **Creative Expression**: Art and storytelling combined to help children express themselves
+- **Community Support**: Thanks to generous donors, we provided new learning materials
+
+### Student Achievements:
+
+Our dedicated teachers noticed remarkable progress in several areas:
+- Improved pronunciation and confidence in speaking English
+- Better reading comprehension skills
+- Increased participation in classroom discussions
+
+### Looking Forward:
+
+With continued support from our amazing donor community, we can expand these programs to reach even more children. Every donation truly makes a difference in these young lives.
+
+*"Education is the most powerful weapon which you can use to change the world."* - Nelson Mandela
+
+Thank you for being part of this incredible journey of transformation!`;
+
+      setGeneratedBlog(generatedContent);
+      setIsGenerating(false);
       toast({
         title: "Blog Generated Successfully!",
         description: "Your AI-generated blog post is ready for review",
       });
-    } catch (e: any) {
-      console.error(e);
-      toast({
-        title: "Generation failed",
-        description: e?.message || "Something went wrong",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    }, 3000);
   };
 
-  const publishBlog = async () => {
-    if (!generated) {
+  const publishBlog = () => {
+    toast({
+      title: "Blog Published!",
+      description: "Your story has been shared with the community",
+    });
+    setGeneratedBlog("");
+    setBlogPrompt("");
+    setUploadedImages([]);
+  };
+
+  // Announcement management functions
+  const addAnnouncement = () => {
+    if (!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.studentName || !newAnnouncement.school) {
       toast({
-        title: "Nothing to publish",
-        description: "Generate a story first.",
+        title: "Missing Information",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      // Save to Firestore `stories` collection
-      const id = await saveStory({
-        title: generated.title,
-        summary: generated.summary,
-        bodyHtml: generated.bodyHtml,
-        tags: generated.tags,
-        category: generated.category,
-        readingMinutes: generated.readingMinutes,
-        images: uploadedImageUrls.map((url) => ({ url })),
-        author: "REACH Team",
-      });
+    const announcement = {
+      id: Date.now(),
+      ...newAnnouncement,
+      date: new Date().toISOString().split('T')[0],
+      isActive: true
+    };
 
-      toast({
-        title: "Blog Published!",
-        description: `Story ID: ${id}`,
-      });
+    setAnnouncements([announcement, ...announcements]);
+    setNewAnnouncement({
+      title: "",
+      content: "",
+      studentName: "",
+      school: "",
+      priority: "medium"
+    });
 
-      // Reset UI
-      setGeneratedBlog("");
-      setGenerated(null);
-      setBlogPrompt("");
-      setUploadedImages([]);
-      setUploadedImageUrls([]);
-    } catch (e: any) {
-      console.error(e);
-      toast({
-        title: "Publish failed",
-        description: e?.message || "Could not save the story",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Announcement Added!",
+      description: "Your announcement has been published",
+    });
+  };
+
+  const toggleAnnouncementStatus = (id: number) => {
+    setAnnouncements(announcements.map(announcement => 
+      announcement.id === id 
+        ? { ...announcement, isActive: !announcement.isActive }
+        : announcement
+    ));
+  };
+
+  const deleteAnnouncement = (id: number) => {
+    setAnnouncements(announcements.filter(announcement => announcement.id !== id));
+    toast({
+      title: "Announcement Deleted",
+      description: "The announcement has been removed",
+    });
   };
 
   return (
     <div className="min-h-screen py-8 px-6">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-bold mb-4 text-gradient">
-              Admin Dashboard
-            </h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-4 text-gradient">Admin Dashboard</h1>
           <p className="text-xl text-muted-foreground">
-              Manage content, track student progress, and create engaging
-              stories for your community.
-            </p>
-          </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="flex items-center space-x-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
-          </Button>
+            Manage content, track student progress, and create engaging stories for your community.
+          </p>
         </div>
 
         <Tabs defaultValue="blog-creator" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger
-              value="blog-creator"
-              className="flex items-center space-x-2"
-            >
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="blog-creator" className="flex items-center space-x-2">
               <Bot className="w-4 h-4" />
               <span>Blog Creator</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="student-grades"
-              className="flex items-center space-x-2"
-            >
+            <TabsTrigger value="announcements" className="flex items-center space-x-2">
+              <Megaphone className="w-4 h-4" />
+              <span>Announcements</span>
+            </TabsTrigger>
+            <TabsTrigger value="student-grades" className="flex items-center space-x-2">
               <GraduationCap className="w-4 h-4" />
               <span>Student Grades</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="content-manager"
-              className="flex items-center space-x-2"
-            >
+            <TabsTrigger value="content-manager" className="flex items-center space-x-2">
               <BookOpen className="w-4 h-4" />
               <span>Content Manager</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="donor-manager"
-              className="flex items-center space-x-2"
-            >
-              <BadgeDollarSignIcon className="w-4 h-4" />
-              <span>Donor Management</span>
             </TabsTrigger>
           </TabsList>
 
@@ -666,9 +279,7 @@ const Admin = () => {
                 <CardContent className="space-y-6">
                   {/* Image Upload */}
                   <div>
-                    <Label htmlFor="images" className="text-base font-medium">
-                      Upload Images
-                    </Label>
+                    <Label htmlFor="images" className="text-base font-medium">Upload Images</Label>
                     <div className="mt-2 border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                       <input
                         id="images"
@@ -693,15 +304,10 @@ const Admin = () => {
                       <div className="mt-4 space-y-2">
                         <p className="text-sm font-medium">Uploaded Images:</p>
                         {uploadedImages.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-2 text-sm bg-muted/50 p-2 rounded"
-                          >
+                          <div key={index} className="flex items-center space-x-2 text-sm bg-muted/50 p-2 rounded">
                             <FileImage className="w-4 h-4" />
                             <span className="flex-1 truncate">{file.name}</span>
-                            <Badge variant="outline">
-                              {(file.size / 1024).toFixed(1)} KB
-                            </Badge>
+                            <Badge variant="outline">{(file.size / 1024).toFixed(1)} KB</Badge>
                           </div>
                         ))}
                       </div>
@@ -710,9 +316,7 @@ const Admin = () => {
 
                   {/* Description Input */}
                   <div>
-                    <Label htmlFor="prompt" className="text-base font-medium">
-                      Describe the Story
-                    </Label>
+                    <Label htmlFor="prompt" className="text-base font-medium">Describe the Story</Label>
                     <Textarea
                       id="prompt"
                       placeholder="Tell us about the images... What happened? Who was involved? What made this moment special? The more details you provide, the richer the generated story will be."
@@ -721,19 +325,14 @@ const Admin = () => {
                       className="mt-2 min-h-[120px] resize-none"
                     />
                     <p className="text-sm text-muted-foreground mt-2">
-                      Example: "Today's English class was amazing! The children
-                      were learning animal names using picture cards. Emma
-                      raised her hand enthusiastically to answer questions, and
-                      Tommy helped his classmate with pronunciation."
+                      Example: "Today's English class was amazing! The children were learning animal names using picture cards. Emma raised her hand enthusiastically to answer questions, and Tommy helped his classmate with pronunciation."
                     </p>
                   </div>
 
                   {/* Generate Button */}
                   <Button 
                     onClick={handleGenerateBlog}
-                    disabled={
-                      isGenerating || !blogPrompt || uploadedImages.length === 0
-                    }
+                    disabled={isGenerating || !blogPrompt || uploadedImages.length === 0}
                     className="w-full bg-gradient-primary hover:bg-primary/90"
                   >
                     {isGenerating ? (
@@ -775,11 +374,7 @@ const Admin = () => {
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
-                        <Button
-                          onClick={publishBlog}
-                          size="sm"
-                          className="bg-secondary hover:bg-secondary/90"
-                        >
+                        <Button onClick={publishBlog} size="sm" className="bg-secondary hover:bg-secondary/90">
                           <Send className="w-4 h-4 mr-2" />
                           Publish
                         </Button>
@@ -788,27 +383,171 @@ const Admin = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                {generatedBlog ? (
-                  <div className="prose prose-sm max-w-none">
-                    <div className="bg-muted/30 p-6 rounded-lg border">
-                      {/* Render the generated HTML safely into your styled container */}
-                      <div
-                        className="font-sans text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                  {generatedBlog ? (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="bg-muted/30 p-6 rounded-lg border">
+                        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                          {generatedBlog}
+                        </pre>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg">Your generated story will appear here</p>
+                      <p className="text-sm">Upload images and add a description to get started</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Announcements Tab */}
+          <TabsContent value="announcements">
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Add New Announcement */}
+              <Card className="border-0 shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Megaphone className="w-6 h-6 text-primary" />
+                    <span>Add New Announcement</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="announcement-title" className="text-base font-medium">Announcement Title *</Label>
+                    <Input
+                      id="announcement-title"
+                      placeholder="e.g., Lily passed her first English test!"
+                      value={newAnnouncement.title}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="announcement-content" className="text-base font-medium">Announcement Content *</Label>
+                    <Textarea
+                      id="announcement-content"
+                      placeholder="Share the details of this achievement or milestone..."
+                      value={newAnnouncement.content}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                      className="mt-2 min-h-[100px] resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="student-name" className="text-base font-medium">Student Name *</Label>
+                      <Input
+                        id="student-name"
+                        placeholder="e.g., Lily"
+                        value={newAnnouncement.studentName}
+                        onChange={(e) => setNewAnnouncement({...newAnnouncement, studentName: e.target.value})}
+                        className="mt-2"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="school" className="text-base font-medium">School *</Label>
+                      <select
+                        id="school"
+                        value={newAnnouncement.school}
+                        onChange={(e) => setNewAnnouncement({...newAnnouncement, school: e.target.value})}
+                        className="mt-2 w-full px-3 py-2 border border-input bg-background rounded-md"
+                      >
+                        <option value="">Select School</option>
+                        {schools.map(school => (
+                          <option key={school} value={school}>{school}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">
-                        Your generated story will appear here
-                      </p>
-                      <p className="text-sm">
-                        Upload images and add a description to get started
-                      </p>
+
+                  <div>
+                    <Label htmlFor="priority" className="text-base font-medium">Priority Level</Label>
+                    <select
+                      id="priority"
+                      value={newAnnouncement.priority}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, priority: e.target.value})}
+                      className="mt-2 w-full px-3 py-2 border border-input bg-background rounded-md"
+                    >
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
+                    </select>
                   </div>
-                )}
+
+                  <Button 
+                    onClick={addAnnouncement}
+                    className="w-full bg-gradient-primary hover:bg-primary/90"
+                  >
+                    <Megaphone className="w-4 h-4 mr-2" />
+                    Publish Announcement
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Manage Announcements */}
+              <Card className="border-0 shadow-soft">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Star className="w-6 h-6 text-secondary" />
+                    <span>Manage Announcements</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {announcements.map((announcement) => (
+                      <Card key={announcement.id} className="card-hover">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="font-semibold text-lg">{announcement.title}</h3>
+                                <Badge 
+                                  variant={announcement.priority === "high" ? "default" : "secondary"}
+                                  className={announcement.priority === "high" ? "bg-red-500" : ""}
+                                >
+                                  {announcement.priority}
+                                </Badge>
+                                <Badge variant={announcement.isActive ? "default" : "outline"}>
+                                  {announcement.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {announcement.content}
+                              </p>
+                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                <div className="flex items-center space-x-1">
+                                  <Calendar className="w-3 h-3" />
+                                  <span>{new Date(announcement.date).toLocaleDateString()}</span>
+                                </div>
+                                <span>•</span>
+                                <span>{announcement.studentName} - {announcement.school}</span>
+                              </div>
+                            </div>
+                            <div className="flex space-x-2 ml-4">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => toggleAnnouncementStatus(announcement.id)}
+                              >
+                                {announcement.isActive ? "Deactivate" : "Activate"}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => deleteAnnouncement(announcement.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -834,35 +573,18 @@ const Admin = () => {
                 <div className="grid md:grid-cols-4 gap-4 mb-6">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search students..."
-                      className="pl-10"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                    <Input placeholder="Search students..." className="pl-10" />
                   </div>
-                  <select
-                    className="px-3 py-2 border border-input bg-background rounded-md"
-                    value={selectedSchool}
-                    onChange={(e) => setSelectedSchool(e.target.value)}
-                  >
+                  <select className="px-3 py-2 border border-input bg-background rounded-md">
                     <option value="">All Schools</option>
-                    {schools.map((school) => (
-                      <option key={school} value={school}>
-                        {school}
-                      </option>
+                    {schools.map(school => (
+                      <option key={school} value={school}>{school}</option>
                     ))}
                   </select>
-                  <select
-                    className="px-3 py-2 border border-input bg-background rounded-md"
-                    value={selectedRegion}
-                    onChange={(e) => setSelectedRegion(e.target.value)}
-                  >
+                  <select className="px-3 py-2 border border-input bg-background rounded-md">
                     <option value="">All Regions</option>
-                    {regions.map((region) => (
-                      <option key={region} value={region}>
-                        {region}
-                      </option>
+                    {regions.map(region => (
+                      <option key={region} value={region}>{region}</option>
                     ))}
                   </select>
                   <select className="px-3 py-2 border border-input bg-background rounded-md">
@@ -877,158 +599,42 @@ const Admin = () => {
                 </div>
 
                 {/* Quick Add Grade Form */}
-                <Card
-                  className={`mb-6 ${
-                    editingStudent
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-accent/10 border-accent/20"
-                  }`}
-                >
+                <Card className="mb-6 bg-accent/10 border-accent/20">
                   <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      <span>
-                        {editingStudent
-                          ? `Editing ${editingStudent.name}`
-                          : "Quick Grade Entry"}
-                      </span>
-                      {editingStudent && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingStudent(null);
-                            setQuickGradeForm({
-                              studentName: "",
-                              school: "",
-                              class: "",
-                              englishGrade: "",
-                              mathGrade: "",
-                            });
-                          }}
-                        >
-                          Cancel Edit
-                        </Button>
-                      )}
-                    </CardTitle>
+                    <CardTitle className="text-lg">Quick Grade Entry</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-6 gap-4">
-                      <Input
-                        placeholder="Student Name"
-                        value={quickGradeForm.studentName}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            studentName: e.target.value,
-                          })
-                        }
-                        disabled={!!editingStudent} // Disable name editing when editing existing student
-                      />
-                      <select
-                        className="px-3 py-2 border border-input bg-background rounded-md"
-                        value={quickGradeForm.school}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            school: e.target.value,
-                          })
-                        }
-                        disabled={!!editingStudent} // Disable school editing when editing existing student
-                      >
+                      <Input placeholder="Student Name" />
+                      <select className="px-3 py-2 border border-input bg-background rounded-md">
                         <option value="">Select School</option>
-                        {schools.map((school) => (
-                          <option key={school} value={school}>
-                            {school}
-                          </option>
+                        {schools.map(school => (
+                          <option key={school} value={school}>{school}</option>
                         ))}
                       </select>
-                      <Input
-                        placeholder="Class (e.g., K2A)"
-                        value={quickGradeForm.class}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            class: e.target.value,
-                          })
-                        }
-                        disabled={!!editingStudent} // Disable class editing when editing existing student
-                      />
-                      <Input
-                        placeholder="English Grade"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={quickGradeForm.englishGrade}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            englishGrade: e.target.value,
-                          })
-                        }
-                      />
-                      <Input
-                        placeholder="Math Grade"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={quickGradeForm.mathGrade}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            mathGrade: e.target.value,
-                          })
-                        }
-                      />
-                      <Button
-                        className="bg-secondary hover:bg-secondary/90"
-                        onClick={
-                          editingStudent
-                            ? handleUpdateStudent
-                            : handleQuickGradeSubmit
-                        }
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : editingStudent ? (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Update & Notify
-                          </>
-                        ) : (
-                          <>
+                      <Input placeholder="Class (e.g., K2A)" />
+                      <Input placeholder="English Grade" type="number" min="0" max="100" />
+                      <Input placeholder="Math Grade" type="number" min="0" max="100" />
+                      <Button className="bg-secondary hover:bg-secondary/90">
                         <Save className="w-4 h-4 mr-2" />
-                            Save & Notify
-                          </>
-                        )}
+                        Save
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Students Table */}
-                {loading ? (
-                  <div className="text-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-                    <p className="text-muted-foreground">Loading students...</p>
-                  </div>
-                ) : (
                 <div className="space-y-4">
-                    {filteredStudents.map((student) => (
+                  {students.map((student) => (
                     <Card key={student.id} className="card-hover">
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
-                                {student.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
+                              {student.name.split(' ').map(n => n[0]).join('')}
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">
-                                  {student.name}
-                                </h3>
+                              <h3 className="font-semibold text-lg">{student.name}</h3>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <School className="w-4 h-4" />
@@ -1045,29 +651,17 @@ const Admin = () => {
                           <div className="flex items-center space-x-6">
                             {/* Grades Display */}
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-primary">
-                                  {student.english}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  English
-                                </p>
+                              <p className="text-2xl font-bold text-primary">{student.englishGrade}</p>
+                              <p className="text-xs text-muted-foreground">English</p>
                             </div>
                             <div className="text-center">
-                                <p className="text-2xl font-bold text-secondary">
-                                  {student.math}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Math
-                                </p>
+                              <p className="text-2xl font-bold text-secondary">{student.mathGrade}</p>
+                              <p className="text-xs text-muted-foreground">Math</p>
                             </div>
 
                             {/* Actions */}
                             <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditStudent(student)}
-                                >
+                              <Button variant="outline" size="sm">
                                 <Edit className="w-4 h-4" />
                               </Button>
                               <Button variant="outline" size="sm">
@@ -1076,25 +670,16 @@ const Admin = () => {
                             </div>
                           </div>
                         </div>
+
+                        <div className="mt-4 pt-4 border-t">
+                          <p className="text-sm text-muted-foreground">
+                            Last updated: {new Date(student.lastUpdated).toLocaleDateString()}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
-                )}
-
-                {!loading && filteredStudents.length === 0 && (
-                  <div className="text-center py-8">
-                    <GraduationCap className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">
-                      No students found
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {searchTerm || selectedSchool
-                        ? "Try adjusting your search criteria or add a new student."
-                        : "Start by adding your first student using the form above."}
-                    </p>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -1148,261 +733,6 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          {/* Donor Management Tab */}
-          <TabsContent value="donor-manager">
-            <Card className="border-0 shadow-soft">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <BadgeDollarSignIcon className="w-6 h-6 text-primary" />
-                    <span>Donor Management</span>
-                  </div>
-                  <Badge variant="outline" className="text-sm">
-                    {donors.length} Active Donors
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Search and Filter */}
-                <div className="grid md:grid-cols-3 gap-4 mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search donors..."
-                      className="pl-10"
-                      value={donorSearchTerm}
-                      onChange={(e) => setDonorSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <select
-                    className="px-3 py-2 border border-input bg-background rounded-md"
-                    value={selectedDonorSchool}
-                    onChange={(e) => setSelectedDonorSchool(e.target.value)}
-                  >
-                    <option value="">All Schools</option>
-                    {schools.map((school) => (
-                      <option key={school} value={school}>
-                        {school}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="text-right">
-                    <Badge variant="secondary" className="text-lg px-4 py-2">
-                      Total: $
-                      {donors
-                        .reduce((sum, donor) => sum + donor.amount, 0)
-                        .toLocaleString()}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Quick Add Donor Form */}
-                <Card
-                  className={`mb-6 ${
-                    editingDonor
-                      ? "bg-green-50 border-green-200"
-                      : "bg-accent/10 border-accent/20"
-                  }`}
-                >
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      <span>
-                        {editingDonor
-                          ? `Editing ${editingDonor.name}`
-                          : "Add New Donor"}
-                      </span>
-                      {editingDonor && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingDonor(null);
-                            setDonorForm({
-                              name: "",
-                              email: "",
-                              amount: "",
-                              school: "",
-                            });
-                          }}
-                        >
-                          Cancel Edit
-                        </Button>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-5 gap-4">
-                      <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Donor Name"
-                          className="pl-10"
-                          value={donorForm.name}
-                          onChange={(e) =>
-                            setDonorForm({
-                              ...donorForm,
-                              name: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Email Address"
-                          type="email"
-                          className="pl-10"
-                          value={donorForm.email}
-                          onChange={(e) =>
-                            setDonorForm({
-                              ...donorForm,
-                              email: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="relative">
-                        <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Donation Amount"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          className="pl-10"
-                          value={donorForm.amount}
-                          onChange={(e) =>
-                            setDonorForm({
-                              ...donorForm,
-                              amount: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <select
-                        className="px-3 py-2 border border-input bg-background rounded-md"
-                        value={donorForm.school}
-                        onChange={(e) =>
-                          setDonorForm({
-                            ...donorForm,
-                            school: e.target.value,
-                          })
-                        }
-                      >
-                        <option value="">Select School</option>
-                        {schools.map((school) => (
-                          <option key={school} value={school}>
-                            {school}
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        className="bg-primary hover:bg-primary/90"
-                        onClick={handleDonorSubmit}
-                        disabled={saving}
-                      >
-                        {saving ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : editingDonor ? (
-                          <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Update Donor
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Donor
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Donors List */}
-                <div className="space-y-4">
-                  {filteredDonors.map((donor) => (
-                    <Card key={donor.id} className="card-hover">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                              {donor.name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-lg">
-                                {donor.name}
-                              </h3>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <Mail className="w-4 h-4" />
-                                  <span>{donor.email}</span>
-                                </div>
-                                <span>•</span>
-                                <div className="flex items-center space-x-1">
-                                  <School className="w-4 h-4" />
-                                  <span>{donor.school}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center space-x-6">
-                            {/* Donation Amount */}
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-green-600">
-                                ${donor.amount.toLocaleString()}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Donated
-                              </p>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditDonor(donor)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  donor.id && handleDeleteDonor(donor.id)
-                                }
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {filteredDonors.length === 0 && (
-                  <div className="text-center py-8">
-                    <BadgeDollarSignIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">
-                      No donors found
-                    </h3>
-                    <p className="text-muted-foreground">
-                      {donorSearchTerm || selectedDonorSchool
-                        ? "Try adjusting your search criteria or add a new donor."
-                        : "Start by adding your first donor using the form above."}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>
