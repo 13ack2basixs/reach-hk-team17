@@ -1236,9 +1236,10 @@ const Admin = () => {
                   {generatedBlog ? (
                     <div className="prose prose-sm max-w-none">
                       <div className="bg-muted/30 p-6 rounded-lg border">
-                        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                          {generatedBlog}
-                        </pre>
+                        <div
+                          className="font-sans text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                        />
                       </div>
                     </div>
                   ) : (
