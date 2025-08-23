@@ -1,73 +1,167 @@
-# Welcome to your Lovable project
+# REACH - Race for Education Accessibilities for Every Child
 
-## Project info
+A comprehensive web platform for managing educational programs, donor relationships, and student progress tracking for REACH, a Hong Kong-based charity organization.
 
-**URL**: https://lovable.dev/projects/04701e8c-c200-4c79-8fd2-0bb09b288908
+## 🎯 Project Overview
 
-## How can I edit this code?
+REACH is dedicated to providing educational opportunities for children in need. This platform serves as a central hub for:
+- **Donor Management**: Track donations, manage donor profiles, and generate insights
+- **Student Progress**: Monitor academic performance and learning milestones
+- **Content Management**: Create and publish stories about student achievements
+- **Announcements**: Share updates and celebrate student successes
 
-There are several ways of editing your application.
+## ✨ Key Features
 
-**Use Lovable**
+### 🏠 Home Page
+- Hero section with mission statement
+- Program highlights and impact statistics
+- Call-to-action for donations
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/04701e8c-c200-4c79-8fd2-0bb09b288908) and start prompting.
+### 💰 Donate Page
+- **FPS QR Code**: Direct payment via Hong Kong's Faster Payment System
+- **Bank Transfer**: Complete banking details for wire transfers
+- **Credit Card/Alipay**: Secure online payments via Stripe
+- Tax exemption information for Hong Kong donors
 
-Changes made via Lovable will be committed automatically to this repo.
+### 📊 Admin Dashboard
+- **Blog Creator**: AI-powered story generation with image uploads
+- **Announcement Management**: Publish student achievements and milestones
+- **Student Grade Tracking**: Monitor academic progress across schools
+- **Donor Management**: 
+  - Comprehensive donor profiles and donation history
+  - Real-time analytics and charts
+  - Search and filter capabilities
+  - Individual vs Corporate donor tracking
 
-**Use your preferred IDE**
+### 📖 Stories/Blogs
+- Dynamic content from Firebase
+- Category filtering and search
+- Featured stories with rich media
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠 Technology Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend**: React 18 with TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Build Tool**: Vite
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Auth
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Routing**: React Router DOM
 
-Follow these steps:
+## 🚀 Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Firebase project setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Installation
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd reach-hk-team17
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   Create a `.env` file in the root directory with your Firebase configuration:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_APP_ID=your_app_id
+   VITE_FIREBASE_SENDER_ID=your_sender_id
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to `http://localhost:8084` (or the port shown in terminal)
+
+## 📁 Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   ├── ui/             # shadcn/ui components
+│   └── Navigation.tsx  # Main navigation
+├── pages/              # Page components
+│   ├── Home.tsx        # Landing page
+│   ├── Donate.tsx      # Donation page
+│   ├── Admin.tsx       # Admin dashboard
+│   ├── Blogs.tsx       # Stories/blog page
+│   └── ...
+├── services/           # Firebase services
+│   └── donorService.ts # Donor management logic
+├── contexts/           # React contexts
+│   └── AnnouncementContext.tsx
+├── lib/                # Utilities and configurations
+│   └── firebase.ts     # Firebase setup
+└── hooks/              # Custom React hooks
 ```
 
-**Edit a file directly in GitHub**
+## 🔥 Firebase Collections
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The project uses the following Firestore collections:
+- `donors` - Donor profiles and information
+- `donations` - Individual donation records
+- `stories` - Blog posts and student stories
+- `announcements` - Student achievement announcements
 
-**Use GitHub Codespaces**
+## 🎨 Design System
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Built with shadcn/ui and Tailwind CSS for a consistent, modern design:
+- **Color Scheme**: Primary blues and greens with warm accents
+- **Typography**: Clean, readable fonts
+- **Components**: Accessible, responsive UI components
+- **Layout**: Mobile-first responsive design
 
-## What technologies are used for this project?
+## 📱 Features in Detail
 
-This project is built with:
+### Donor Management
+- **Real-time Updates**: Live data synchronization with Firebase
+- **Advanced Filtering**: Search by name, email, school, or donor type
+- **Analytics Dashboard**: Monthly trends, school breakdowns, and key metrics
+- **Profile Management**: Complete donation history and contact information
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Content Management
+- **AI Blog Generation**: Create engaging stories from images and descriptions
+- **Announcement System**: Celebrate student achievements
+- **Media Upload**: Support for multiple image formats
+- **Rich Text Editing**: Format content with markdown support
 
-## How can I deploy this project?
+### Payment Integration
+- **FPS QR Code**: Hong Kong's preferred payment method
+- **Stripe Integration**: Secure credit card and Alipay processing
+- **Bank Transfer Details**: Complete banking information
+- **Tax Receipts**: Hong Kong tax exemption compliance
 
-Simply open [Lovable](https://lovable.dev/projects/04701e8c-c200-4c79-8fd2-0bb09b288908) and click on Share -> Publish.
+## 🤝 Contributing
 
-## Can I connect a custom domain to my Lovable project?
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Yes, you can!
+## 📄 License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+This project is proprietary software for REACH Hong Kong.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🆘 Support
+
+For technical support or questions about the platform, please contact the development team.
+
+---
+
+**Built with ❤️ for REACH Hong Kong**

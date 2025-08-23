@@ -22,6 +22,24 @@ export const auth = getAuth(app);
 // Use the SAME region you deployed to
 export const functions = getFunctions(app, "us-central1");
 
+// Test Firebase connection
+export const testFirebaseConnection = async () => {
+  try {
+    console.log("🔍 Testing Firebase connection...");
+    console.log("📁 Project ID:", firebaseConfig.projectId);
+    console.log("🌍 Region: us-central1");
+    
+    // Try to access Firestore
+    const { collection, doc, getDoc } = await import('firebase/firestore');
+    const testDoc = await getDoc(doc(collection(db, 'test'), 'connection-test'));
+    console.log("✅ Firebase connection successful!");
+    return true;
+  } catch (error) {
+    console.error("❌ Firebase connection failed:", error);
+    return false;
+  }
+};
+
 export async function callGenerateBlog(data: { prompt: string; imageUrls: string[] }) {
   const fn = httpsCallable(functions, "generateBlog");
   const res = await fn(data);
