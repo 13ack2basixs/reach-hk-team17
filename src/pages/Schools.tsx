@@ -14,6 +14,7 @@ import {
   Calendar
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 const Schools = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,59 +23,59 @@ const Schools = () => {
   const schools = [
     {
       id: 1,
-      name: "Sunshine Kindergarten",
-      region: "Sham Shui Po",
+      name: "Yan Oi Tong Pang Hung Cheung Kindergarten",
+      region: "Tsuen Wan",
       students: 45,
       age: "3-5 years",
       description: "A vibrant community school serving children from low-income families. Our students show incredible enthusiasm for learning despite facing significant challenges at home.",
       impact: "Thanks to donor support, 40 children received new English books this semester.",
       recentNews: "Little Amy scored 95% on her English assessment!",
       needsLevel: "High",
-      images: ["classroom1.jpg", "students1.jpg"],
+      images: ["/schools/yotphc.jpg"],
       totalDonations: 12500
     },
     {
       id: 2,
-      name: "Rainbow Learning Center",
-      region: "Kwun Tong",
+      name: "Yan Oi Tong CTK",
+      region: "Tuen Mun",
       students: 38,
       age: "4-6 years",
       description: "Located in one of Hong Kong's most densely populated areas, this school provides a safe haven for learning. Many children walk long distances to attend classes.",
       impact: "Recent donations funded 25 new tablets for interactive English learning.",
       recentNews: "Class 2A won the regional spelling bee competition!",
       needsLevel: "Critical",
-      images: ["classroom2.jpg", "students2.jpg"],
+      images: ["/schools/yotctk.jpeg"],
       totalDonations: 8750
     },
     {
       id: 3,
-      name: "Hope Valley School",
-      region: "Tin Shui Wai",
+      name: "Yan Oi Tong Dan Yang Wing Man",
+      region: "Tseung Kwan O",
       students: 52,
       age: "3-6 years",
       description: "Serving one of Hong Kong's most disadvantaged communities, this school transforms lives daily. Children here dream big despite limited resources.",
       impact: "Your donations provided nutritious lunches for 50 children for 3 months.",
       recentNews: "15 students advanced to advanced English reading groups!",
       needsLevel: "Moderate",
-      images: ["classroom3.jpg", "students3.jpg"],
+      images: ["/schools/yotdywm.jpg"],
       totalDonations: 15300
     },
     {
       id: 4,
-      name: "Bright Futures Academy",
-      region: "Tuen Mun",
+      name: "Principal Chan Free Tutorial World",
+      region: "Sham Shui Po",
       students: 41,
       age: "4-5 years",
       description: "A beacon of hope in the community, fostering creativity and academic excellence. Teachers here go above and beyond to nurture each child's potential.",
       impact: "Donations funded a new computer lab with 20 workstations.",
       recentNews: "Student artwork displayed at city cultural center!",
       needsLevel: "High",
-      images: ["classroom4.jpg", "students4.jpg"],
+      images: ["/schools/principal.jpg"],
       totalDonations: 9800
     }
   ];
 
-  const regions = ["all", "Sham Shui Po", "Kwun Tong", "Tin Shui Wai", "Tuen Mun"];
+  const regions = ["all", "Tsuen Wan", "Tuen Mun", "Tseung Kwan O", "Sham Shui Po"];
 
   const filteredSchools = schools.filter(school => {
     const matchesSearch = school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,17 +135,19 @@ const Schools = () => {
         <div className="grid md:grid-cols-2 gap-8">
           {filteredSchools.map((school) => (
             <Card key={school.id} className="card-hover border-0 shadow-soft overflow-hidden">
-              <div className="aspect-video bg-gradient-warm relative">
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                  <GraduationCap className="w-16 h-16 text-white/80" />
-                </div>
+              <div className="relative aspect-video overflow-hidden">
+                <img
+                  src={school.images[0]}
+                  alt={`${school.name} thumbnail`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/10" /> {/* optional overlay */}
                 <Badge 
                   className={`absolute top-4 right-4 ${getNeedsColor(school.needsLevel)}`}
                 >
                   {school.needsLevel} Need
                 </Badge>
               </div>
-              
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-xl">{school.name}</span>
@@ -229,11 +232,12 @@ const Schools = () => {
                             </div>
                           </div>
                         </div>
-                        
-                        <Button className="w-full bg-gradient-primary hover:bg-primary/90">
-                          <Heart className="w-4 h-4 mr-2" />
-                          Donate to {school.name}
-                        </Button>
+                        <Link to="/donate" state={{ school: school.name }}>
+                          <Button className="w-full bg-gradient-primary hover:bg-primary/90">
+                            <Heart className="w-4 h-4 mr-2" />
+                            Donate to {school.name}
+                          </Button>
+                        </Link>
                       </div>
                     </DialogContent>
                   </Dialog>

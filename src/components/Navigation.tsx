@@ -10,6 +10,7 @@ import {
   LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AdminLoginModal from "./AdminLoginModal";
 
 const Navigation = () => {
   const location = useLocation();
@@ -28,12 +29,15 @@ const Navigation = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center shadow-glow">
-            <Heart className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shadow-glow">
+            <img 
+              src="favicon.ico" 
+              alt="REACH Logo" 
+              className="w-10 h-10 object-contain"
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold text-gradient">REACH</h1>
-            <p className="text-xs text-muted-foreground">Building Brighter Futures</p>
           </div>
         </Link>
 
@@ -68,12 +72,12 @@ const Navigation = () => {
             </Link>
           </Button>
           
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin" className="flex items-center space-x-2">
+          <AdminLoginModal>
+            <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Admin</span>
-            </Link>
-          </Button>
+            </Button>
+          </AdminLoginModal>
           
           <Button asChild size="sm" className="bg-gradient-primary hover:bg-primary/90 shadow-glow">
             <Link to="/donate" className="text-white font-medium">

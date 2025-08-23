@@ -31,20 +31,53 @@ import { useAnnouncements } from "@/contexts/AnnouncementContext";
 
 const Admin = () => {
   const { toast } = useToast();
-  const { announcements, addAnnouncement, toggleAnnouncementStatus, deleteAnnouncement } = useAnnouncements();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
   const [generatedBlog, setGeneratedBlog] = useState("");
 
+  // Announcement state
+  const [announcements, setAnnouncements] = useState([
+    {
+      id: 1,
+      title: "Lily passed her first English test!",
+      content: "We're so proud of Lily from Sunshine Kindergarten! She scored 95% on her first English vocabulary test. Her hard work and dedication are truly inspiring.",
+      studentName: "Lily",
+      school: "Sunshine Kindergarten",
+      date: "2024-01-15",
+      isActive: true,
+      priority: "high"
+    },
+    {
+      id: 2,
+      title: "Tommy's reading progress amazes everyone!",
+      content: "Tommy has improved his reading skills dramatically! He can now read simple English books independently. His confidence has grown so much.",
+      studentName: "Tommy",
+      school: "Rainbow Learning Center",
+      date: "2024-01-14",
+      isActive: true,
+      priority: "medium"
+    },
+    {
+      id: 3,
+      title: "Emma leads her first English conversation!",
+      content: "Emma took the lead in today's English conversation class! She helped other students with pronunciation and showed great leadership skills.",
+      studentName: "Emma",
+      school: "Hope Valley School",
+      date: "2024-01-13",
+      isActive: true,
+      priority: "medium"
+    }
+  ]);
+
   const [newAnnouncement, setNewAnnouncement] = useState({
     title: "",
     content: "",
     studentName: "",
-    school: ""
+    school: "",
+    priority: "medium"
   });
-
-  // Mock data for demonstration
+        
   const [students] = useState([
     {
       id: 1,
@@ -153,7 +186,7 @@ Thank you for being part of this incredible journey of transformation!`;
   };
 
   // Announcement management functions
-  const handleAddAnnouncement = () => {
+  const addAnnouncement = () => {
     if (!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.studentName || !newAnnouncement.school) {
       toast({
         title: "Missing Information",
@@ -163,12 +196,20 @@ Thank you for being part of this incredible journey of transformation!`;
       return;
     }
 
-    addAnnouncement(newAnnouncement);
+    const announcement = {
+      id: Date.now(),
+      ...newAnnouncement,
+      date: new Date().toISOString().split('T')[0],
+      isActive: true
+    };
+
+    setAnnouncements([announcement, ...announcements]);
     setNewAnnouncement({
       title: "",
       content: "",
       studentName: "",
-      school: ""
+      school: "",
+      priority: "medium"
     });
 
     toast({
@@ -177,12 +218,16 @@ Thank you for being part of this incredible journey of transformation!`;
     });
   };
 
-  const handleToggleAnnouncementStatus = (id: number) => {
-    toggleAnnouncementStatus(id);
+  const toggleAnnouncementStatus = (id: number) => {
+    setAnnouncements(announcements.map(announcement => 
+      announcement.id === id 
+        ? { ...announcement, isActive: !announcement.isActive }
+        : announcement
+    ));
   };
 
-  const handleDeleteAnnouncement = (id: number) => {
-    deleteAnnouncement(id);
+  const deleteAnnouncement = (id: number) => {
+    setAnnouncements(announcements.filter(announcement => announcement.id !== id));
     toast({
       title: "Announcement Deleted",
       description: "The announcement has been removed",
@@ -419,10 +464,22 @@ Thank you for being part of this incredible journey of transformation!`;
                     </div>
                   </div>
 
-
+                  <div>
+                    <Label htmlFor="priority" className="text-base font-medium">Priority Level</Label>
+                    <select
+                      id="priority"
+                      value={newAnnouncement.priority}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, priority: e.target.value})}
+                      className="mt-2 w-full px-3 py-2 border border-input bg-background rounded-md"
+                    >
+                      <option value="high">High Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="low">Low Priority</option>
+                    </select>
+                  </div>
 
                   <Button 
-                    onClick={handleAddAnnouncement}
+                    onClick={addAnnouncement}
                     className="w-full bg-gradient-primary hover:bg-primary/90"
                   >
                     <Megaphone className="w-4 h-4 mr-2" />
@@ -448,6 +505,12 @@ Thank you for being part of this incredible journey of transformation!`;
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <h3 className="font-semibold text-lg">{announcement.title}</h3>
+                                <Badge 
+                                  variant={announcement.priority === "high" ? "default" : "secondary"}
+                                  className={announcement.priority === "high" ? "bg-red-500" : ""}
+                                >
+                                  {announcement.priority}
+                                </Badge>
                                 <Badge variant={announcement.isActive ? "default" : "outline"}>
                                   {announcement.isActive ? "Active" : "Inactive"}
                                 </Badge>
@@ -468,14 +531,14 @@ Thank you for being part of this incredible journey of transformation!`;
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleToggleAnnouncementStatus(announcement.id)}
+                                onClick={() => toggleAnnouncementStatus(announcement.id)}
                               >
                                 {announcement.isActive ? "Deactivate" : "Activate"}
                               </Button>
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                onClick={() => handleDeleteAnnouncement(announcement.id)}
+                                onClick={() => deleteAnnouncement(announcement.id)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
