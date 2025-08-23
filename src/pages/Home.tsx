@@ -153,10 +153,9 @@ const Home = () => {
                          Discover our comprehensive programs, teaching methodologies, and how we create lasting impact in children's lives.
                        </p>
                        <Button 
-                         variant="outline" 
                          size="sm"
                          onClick={() => scrollToSection('what-we-do')}
-                         className="text-primary hover:text-primary-foreground"
+                         className="bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white transition-colors"
                        >
                          Learn More
                        </Button>
@@ -164,21 +163,20 @@ const Home = () => {
                    </CardContent>
                  </Card>
                  
-                  <Card className="card-hover-brown border-0 shadow-soft">
+                  <Card className="card-hover border-0 shadow-soft">
                     <CardContent className="pt-6 flex items-start space-x-4">
-                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/20 flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-secondary" />
+                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
+                        <TrendingUp className="w-6 h-6 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2 text-gradient-brown">Our Impacts</h3>
+                        <h3 className="text-xl font-semibold mb-2 text-green">Our Impacts</h3>
                         <p className="text-muted-foreground mb-4">
                           See the real difference we're making through success stories, statistics, and measurable outcomes.
                         </p>
                         <Button 
-                          variant="outline" 
                           size="sm"
                           onClick={() => scrollToSection('our-impacts')}
-                          className="text-secondary hover:text-secondary-foreground"
+                          className="bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white transition-colors"
                         >
                           Learn More
                         </Button>
@@ -188,19 +186,18 @@ const Home = () => {
                  
                   <Card className="card-hover-brown border-0 shadow-soft">
                     <CardContent className="pt-6 flex items-start space-x-4">
-                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-secondary/20 flex items-center justify-center">
-                        <Info className="w-6 h-6 text-secondary" />
+                      <div className="w-12 h-12 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center">
+                        <Info className="w-6 h-6 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2 text-gradient-brown">About Us</h3>
+                        <h3 className="text-xl font-semibold mb-2">About Us</h3>
                         <p className="text-muted-foreground mb-4">
                           Learn about the dedicated team behind REACH's mission to bridge the English proficiency gap.
                         </p>
                         <Button 
-                          variant="outline" 
                           size="sm"
                           onClick={() => scrollToSection('about-us')}
-                          className="text-secondary hover:text-secondary-foreground"
+                          className="bg-white text-secondary border border-secondary hover:bg-secondary hover:text-white transition-colors"
                         >
                           Learn More
                         </Button>
@@ -325,10 +322,10 @@ const Home = () => {
                 
                                  <Card className="card-hover-brown border-0 shadow-soft">
                    <CardContent className="pt-6">
-                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-secondary/20 flex items-center justify-center">
-                       <Users className="w-8 h-8 text-secondary" />
+                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
+                       <Users className="w-8 h-8 text-primary" />
                      </div>
-                     <h3 className="text-xl font-semibold mb-4 text-center text-gradient-brown">2. EMPOWERING PARENTS</h3>
+                     <h3 className="text-xl font-semibold mb-4 text-center">2. EMPOWERING PARENTS</h3>
                      <p className="text-muted-foreground text-center mb-4">
                        Students are given home learning booklets for them to practise at home after each
                        class. Detailed written instructions with videos are provided to parents each week on
@@ -344,7 +341,7 @@ const Home = () => {
                 <Card className="card-hover border-0 shadow-soft">
                   <CardContent className="pt-6">
                     <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-accent/20 flex items-center justify-center">
-                      <Heart className="w-8 h-8 text-accent-foreground" />
+                      <Heart className="w-8 h-8 text-primary" />
                     </div>
                     <h3 className="text-xl font-semibold mb-4 text-center">3. EMPOWERING KINDERGARTENS WITH DATA AND TECHNOLOGY</h3>
                     <p className="text-muted-foreground text-center mb-4">
@@ -361,7 +358,7 @@ const Home = () => {
               </div>
             </div>
             
-                         {/* Our Curriculum */}
+             {/* Our Curriculum */}
              <div className="bg-gradient-to-r from-primary/5 to-secondary/10 p-8 rounded-2xl">
                <div className="text-center mb-8">
                  <h3 className="text-2xl font-bold mb-4 text-gradient-nature">Our Proprietary Curriculum</h3>
