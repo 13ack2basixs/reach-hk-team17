@@ -12,27 +12,30 @@ import Admin from "./pages/Admin";
 import DonorDashboard from "./pages/DonorDashboard";
 import NotFound from "./pages/NotFound";
 import Donate from "./pages/Donate";
+import { NotificationProvider } from "./contexts/NotificationContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Navigation />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/schools" element={<Schools />} />
-          <Route path="/blogs" element={<Blogs />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/donor-login" element={<DonorDashboard />} />
-          <Route path="/donate" element={<Donate />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <NotificationProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Navigation />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/schools" element={<Schools />} />
+            <Route path="/blogs" element={<Blogs />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/donor-login" element={<DonorDashboard />} />
+            <Route path="/donate" element={<Donate />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </NotificationProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
