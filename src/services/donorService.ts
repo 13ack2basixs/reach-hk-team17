@@ -1,4 +1,4 @@
-// src/services/donorService.ts
+
 import { 
   collection, 
   doc, 
@@ -54,7 +54,7 @@ const DONATIONS_COLLECTION = 'donations';
 // Create a new donor profile
 export const createDonorProfile = async (donorData: Omit<DonorProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
   try {
-    console.log("🏗️ Creating donor profile with data:", donorData);
+    console.log("Creating donor profile with data:", donorData);
     
     const docRef = await addDoc(collection(db, DONORS_COLLECTION), {
       ...donorData,
@@ -69,10 +69,10 @@ export const createDonorProfile = async (donorData: Omit<DonorProfile, 'id' | 'c
       updatedAt: new Date()
     };
     
-    console.log("✅ Donor profile created successfully:", newProfile);
+    console.log("Donor profile created successfully:", newProfile);
     return newProfile;
   } catch (error) {
-    console.error('❌ Error creating donor profile:', error);
+    console.error('Error creating donor profile:', error);
     throw new Error('Failed to create donor profile');
   }
 };
@@ -130,15 +130,15 @@ export const testDonorCollections = async () => {
     
     // Test donors collection
     const donorsTest = await getDocs(collection(db, DONORS_COLLECTION));
-    console.log("✅ Donors collection accessible, count:", donorsTest.size);
+    console.log("Donors collection accessible, count:", donorsTest.size);
     
     // Test donations collection
     const donationsTest = await getDocs(collection(db, DONATIONS_COLLECTION));
-    console.log("✅ Donations collection accessible, count:", donationsTest.size);
+    console.log("Donations collection accessible, count:", donationsTest.size);
     
     return true;
   } catch (error) {
-    console.error("❌ Error accessing donor collections:", error);
+    console.error("Error accessing donor collections:", error);
     return false;
   }
 };
@@ -146,13 +146,13 @@ export const testDonorCollections = async () => {
 // Get all donors with their donations
 export const getDonorsWithDonations = async (): Promise<Donor[]> => {
   try {
-    console.log("🔍 Attempting to fetch donors from Firestore...");
+    console.log("Attempting to fetch donors from Firestore...");
     
     const donorsSnapshot = await getDocs(collection(db, DONORS_COLLECTION));
-    console.log("✅ Donors collection accessed successfully");
+    console.log("Donors collection accessed successfully");
     
     const donationsSnapshot = await getDocs(collection(db, DONATIONS_COLLECTION));
-    console.log("✅ Donations collection accessed successfully");
+    console.log("Donations collection accessed successfully");
     
     const donors: Donor[] = [];
     
@@ -181,7 +181,7 @@ export const getDonorsWithDonations = async (): Promise<Donor[]> => {
     console.log(`📊 Found ${donors.length} donors with donations`);
     return donors;
   } catch (error) {
-    console.error('❌ Error fetching donors:', error);
+    console.error('Error fetching donors:', error);
     throw new Error('Failed to fetch donors');
   }
 };
@@ -194,10 +194,10 @@ export const getDonorProfileByEmail = async (email: string): Promise<DonorProfil
     const q = query(collection(db, DONORS_COLLECTION), where('email', '==', email));
     const querySnapshot = await getDocs(q);
     
-    console.log("📊 Query result:", querySnapshot.size, "documents found");
+    console.log("Query result:", querySnapshot.size, "documents found");
     
     if (querySnapshot.empty) {
-      console.log("❌ No donor profile found for email:", email);
+      console.log("No donor profile found for email:", email);
       return null;
     }
     
@@ -207,10 +207,10 @@ export const getDonorProfileByEmail = async (email: string): Promise<DonorProfil
       ...donorDoc.data()
     } as DonorProfile;
     
-    console.log("✅ Found donor profile:", donorData);
+    console.log("Found donor profile:", donorData);
     return donorData;
   } catch (error) {
-    console.error('❌ Error fetching donor profile:', error);
+    console.error('Error fetching donor profile:', error);
     throw new Error('Failed to fetch donor profile');
   }
 };
@@ -354,4 +354,91 @@ export const getMonthlyDonationData = async (months: number = 12) => {
     console.error('Error getting monthly data:', error);
     throw new Error('Failed to get monthly donation data');
   }
+};
+
+// Get donors for leaderboard with aggregated data
+export const getDonorsForLeaderboard = async (): Promise<{
+  id: string;
+  name: string;
+  email: string;
+  type: 'Individual' | 'Corporate';
+  totalDonated: number;
+  monthlyDonated: number;
+  donations: number;
+  joinDate: string;
+  level: string;
+  streak: number;
+}[]> => {
+  try {
+    const allDonors = await getDonorsWithDonations();
+    
+    // Group donations by donor email
+    const donorMap = new Map<string, {
+      id: string;
+      name: string;
+      email: string;
+      type: 'Individual' | 'Corporate';
+      totalDonated: number;
+      monthlyDonated: number;
+      donations: number;
+      joinDate: string;
+      level: string;
+      streak: number;
+    }>();
+    
+    allDonors.forEach(donor => {
+      const existing = donorMap.get(donor.email);
+      const donationDate = new Date(donor.dateDonated);
+      const now = new Date();
+      const isThisMonth = donationDate.getMonth() === now.getMonth() && 
+                         donationDate.getFullYear() === now.getFullYear();
+      
+      if (existing) {
+        existing.totalDonated += donor.amount;
+        existing.donations += 1;
+        if (isThisMonth) {
+          existing.monthlyDonated += donor.amount;
+        }
+        // Keep the earliest join date
+        if (new Date(donor.dateDonated) < new Date(existing.joinDate)) {
+          existing.joinDate = donor.dateDonated;
+        }
+      } else {
+        const level = calculateDonorLevel(donor.amount);
+        donorMap.set(donor.email, {
+          id: donor.id || '',
+          name: donor.name,
+          email: donor.email,
+          type: donor.donorType,
+          totalDonated: donor.amount,
+          monthlyDonated: isThisMonth ? donor.amount : 0,
+          donations: 1,
+          joinDate: donor.dateDonated,
+          level,
+          streak: 1 // Simple streak calculation - can be enhanced later
+        });
+      }
+    });
+    
+    // Convert to array and sort by total donated
+    const leaderboardDonors = Array.from(donorMap.values())
+      .sort((a, b) => b.totalDonated - a.totalDonated)
+      .map((donor, index) => ({
+        ...donor,
+        rank: index + 1
+      }));
+    
+    return leaderboardDonors;
+  } catch (error) {
+    console.error('Error getting leaderboard donors:', error);
+    throw new Error('Failed to get leaderboard data');
+  }
+};
+
+// Calculate donor level based on total donations
+const calculateDonorLevel = (totalDonated: number): string => {
+  if (totalDonated >= 10000) return 'Evergreen';
+  if (totalDonated >= 5000) return 'Flowering Tree';
+  if (totalDonated >= 2000) return 'Sapling';
+  return 'Seed';
 };
