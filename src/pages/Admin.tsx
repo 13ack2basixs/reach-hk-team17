@@ -21,7 +21,9 @@ import {
   Sparkles,
   FileImage,
   School,
+  LogOut
 } from "lucide-react";
+
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useEffect } from "react";
@@ -30,13 +32,33 @@ import { useNotifications } from "../contexts/NotificationContext";
 import { Timestamp } from "firebase/firestore";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { updatesService, Update } from "@/services/updateServices";
+import { uploadImages, saveStory } from "@/services/blogService";
+import { callGenerateBlog } from "@/lib/firebase";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+// The structured blog we get back from the Cloud Function
+type Generated = {
+  title: string;
+  summary: string;
+  bodyHtml: string;
+  tags: string[];
+  category: string;
+  readingMinutes: number;
+};
 
 const Admin = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const { logout } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
   const [generatedBlog, setGeneratedBlog] = useState("");
+  // Where the uploaded images end up (download URLs for preview/publish)
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  // Keep existing string preview, but also store the structured result:
+  const [generated, setGenerated] = useState<Generated | null>(null);
 
   // Real Firebase state management
   const [loading, setLoading] = useState(true);
@@ -285,6 +307,24 @@ const Admin = () => {
     }
   };
 
+const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the admin dashboard",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
+}
+
+
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     setUploadedImages(files);
@@ -323,38 +363,95 @@ Today was filled with incredible moments as we witnessed the power of education 
 - **Community Support**: Thanks to generous donors, we provided new learning materials
 
 ### Student Achievements:
+    try {
+      setIsGenerating(true);
+      setGenerated(null);
+      setGeneratedBlog(""); // clear the right pane
 
-Our dedicated teachers noticed remarkable progress in several areas:
-- Improved pronunciation and confidence in speaking English
-- Better reading comprehension skills
-- Increased participation in classroom discussions
+      // 1) Upload images to Firebase Storage and collect public URLs
+      const uploaded = await uploadImages(uploadedImages);
+      const urls = uploaded.map(u => u.url);
+      setUploadedImageUrls(urls);
 
-### Looking Forward:
+      // 2) Call your Cloud Function (OpenAI behind the scenes)
+      const res = await callGenerateBlog({ prompt: blogPrompt, imageUrls: urls });
 
-With continued support from our amazing donor community, we can expand these programs to reach even more children. Every donation truly makes a difference in these young lives.
+      if (!res.success || !res.blog) {
+        throw new Error(res.error || "Generation failed");
+      }
 
-*"Education is the most powerful weapon which you can use to change the world."* - Nelson Mandela
-
-Thank you for being part of this incredible journey of transformation!`;
-
-      setGeneratedBlog(generatedContent);
-      setIsGenerating(false);
+      // 3) Save the structured blog AND set your current preview string with HTML
+      setGenerated(res.blog);
+      const html = `
+        <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
+        <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
+        ${res.blog.bodyHtml}
+        <div class="mt-4 text-xs text-muted-foreground">
+          Category: ${res.blog.category} • ${res.blog.readingMinutes} min read
+        </div>
+      `;
+      setGeneratedBlog(html);
       toast({
         title: "Blog Generated Successfully!",
         description: "Your AI-generated blog post is ready for review",
       });
-    }, 3000);
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: "Generation failed",
+        description: e?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const publishBlog = () => {
-    toast({
-      title: "Blog Published!",
-      description: "Your story has been shared with the community",
-    });
-    setGeneratedBlog("");
-    setBlogPrompt("");
-    setUploadedImages([]);
+
+  const publishBlog = async () => {
+    if (!generated) {
+      toast({
+        title: "Nothing to publish",
+        description: "Generate a story first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Save to Firestore `stories` collection
+      const id = await saveStory({
+        title: generated.title,
+        summary: generated.summary,
+        bodyHtml: generated.bodyHtml,
+        tags: generated.tags,
+        category: generated.category,
+        readingMinutes: generated.readingMinutes,
+        images: uploadedImageUrls.map(url => ({ url })),
+        author: "REACH Team",
+      });
+
+      toast({
+        title: "Blog Published!",
+        description: `Story ID: ${id}`,
+      });
+
+      // Reset UI
+      setGeneratedBlog("");
+      setGenerated(null);
+      setBlogPrompt("");
+      setUploadedImages([]);
+      setUploadedImageUrls([]);
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: "Publish failed",
+        description: e?.message || "Could not save the story",
+        variant: "destructive",
+      });
+    }
   };
+
 
   return (
     <div className="min-h-screen py-8 px-6">
@@ -368,6 +465,22 @@ Thank you for being part of this incredible journey of transformation!`;
             Manage content, track student progress, and create engaging stories
             for your community.
           </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-bold mb-4 text-gradient">Admin Dashboard</h1>
+            <p className="text-xl text-muted-foreground">
+              Manage content, track student progress, and create engaging stories for your community.
+            </p>
+          </div>
+          <Button 
+            onClick={handleLogout}
+            variant="outline" 
+            size="sm"
+            className="flex items-center space-x-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="blog-creator" className="space-y-6">
@@ -532,24 +645,22 @@ Thank you for being part of this incredible journey of transformation!`;
                 </CardHeader>
                 <CardContent>
                   {generatedBlog ? (
-                    <div className="prose prose-sm max-w-none">
-                      <div className="bg-muted/30 p-6 rounded-lg border">
-                        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                          {generatedBlog}
-                        </pre>
-                      </div>
+                  <div className="prose prose-sm max-w-none">
+                    <div className="bg-muted/30 p-6 rounded-lg border">
+                      {/* Render the generated HTML safely into your styled container */}
+                      <div
+                        className="font-sans text-sm leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                      />
                     </div>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">
-                        Your generated story will appear here
-                      </p>
-                      <p className="text-sm">
-                        Upload images and add a description to get started
-                      </p>
-                    </div>
-                  )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg">Your generated story will appear here</p>
+                    <p className="text-sm">Upload images and add a description to get started</p>
+                  </div>
+                )}
                 </CardContent>
               </Card>
             </div>

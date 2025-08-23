@@ -14,6 +14,7 @@ import {
   Calendar
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 const Schools = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +31,7 @@ const Schools = () => {
       impact: "Thanks to donor support, 40 children received new English books this semester.",
       recentNews: "Little Amy scored 95% on her English assessment!",
       needsLevel: "High",
-      images: ["classroom1.jpg", "students1.jpg"],
+      images: ["/schools/sunshine.png"],
       totalDonations: 12500
     },
     {
@@ -43,7 +44,7 @@ const Schools = () => {
       impact: "Recent donations funded 25 new tablets for interactive English learning.",
       recentNews: "Class 2A won the regional spelling bee competition!",
       needsLevel: "Critical",
-      images: ["classroom2.jpg", "students2.jpg"],
+      images: ["/schools/rainbow.png"],
       totalDonations: 8750
     },
     {
@@ -56,7 +57,7 @@ const Schools = () => {
       impact: "Your donations provided nutritious lunches for 50 children for 3 months.",
       recentNews: "15 students advanced to advanced English reading groups!",
       needsLevel: "Moderate",
-      images: ["classroom3.jpg", "students3.jpg"],
+      images: ["/schools/hopevalley.png"],
       totalDonations: 15300
     },
     {
@@ -69,7 +70,7 @@ const Schools = () => {
       impact: "Donations funded a new computer lab with 20 workstations.",
       recentNews: "Student artwork displayed at city cultural center!",
       needsLevel: "High",
-      images: ["classroom4.jpg", "students4.jpg"],
+      images: ["/schools/brightfuture.png"],
       totalDonations: 9800
     }
   ];
@@ -134,17 +135,19 @@ const Schools = () => {
         <div className="grid md:grid-cols-2 gap-8">
           {filteredSchools.map((school) => (
             <Card key={school.id} className="card-hover border-0 shadow-soft overflow-hidden">
-              <div className="aspect-video bg-gradient-warm relative">
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                  <GraduationCap className="w-16 h-16 text-white/80" />
-                </div>
+              <div className="relative aspect-video overflow-hidden">
+                <img
+                  src={school.images[0]}
+                  alt={`${school.name} thumbnail`}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/10" /> {/* optional overlay */}
                 <Badge 
                   className={`absolute top-4 right-4 ${getNeedsColor(school.needsLevel)}`}
                 >
                   {school.needsLevel} Need
                 </Badge>
               </div>
-              
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-xl">{school.name}</span>
@@ -229,11 +232,12 @@ const Schools = () => {
                             </div>
                           </div>
                         </div>
-                        
-                        <Button className="w-full bg-gradient-primary hover:bg-primary/90">
-                          <Heart className="w-4 h-4 mr-2" />
-                          Donate to {school.name}
-                        </Button>
+                        <Link to="/donate" state={{ school: school.name }}>
+                          <Button className="w-full bg-gradient-primary hover:bg-primary/90">
+                            <Heart className="w-4 h-4 mr-2" />
+                            Donate to {school.name}
+                          </Button>
+                        </Link>
                       </div>
                     </DialogContent>
                   </Dialog>

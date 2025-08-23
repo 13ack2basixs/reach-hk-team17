@@ -10,6 +10,7 @@ import {
   LogIn
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import AdminLoginModal from "./AdminLoginModal";
 
 const Navigation = () => {
   const location = useLocation();
@@ -68,12 +69,12 @@ const Navigation = () => {
             </Link>
           </Button>
           
-          <Button asChild variant="outline" size="sm">
-            <Link to="/admin" className="flex items-center space-x-2">
+          <AdminLoginModal>
+            <Button variant="outline" size="sm" className="flex items-center space-x-2">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Admin</span>
-            </Link>
-          </Button>
+            </Button>
+          </AdminLoginModal>
           
           <Button asChild size="sm" className="bg-gradient-primary hover:bg-primary/90 shadow-glow">
             <Link to="/donate" className="text-white font-medium">

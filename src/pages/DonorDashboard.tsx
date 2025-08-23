@@ -39,6 +39,7 @@ const DonorDashboard = () => {
   const donorData = {
     name: "Sarah Chen",
     email: "sarah.chen@email.com",
+    type: "Individual", // Added type field
     joinDate: "2022-03-15",
     totalDonated: 2450,
     monthlyDonation: 150,
@@ -446,6 +447,7 @@ const DonorDashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
           </TabsContent>
 
           {/* Updates Tab - Now showing Firebase updates */}
