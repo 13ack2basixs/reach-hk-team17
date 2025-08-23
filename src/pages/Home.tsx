@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowRight, Users, GraduationCap, Heart, Award, Info, Target, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroClassroom from "@/assets/hero-classroom.jpg";
-import childrenLearning from "@/assets/children-learning.jpg";
-import communitySupport from "@/assets/community-support.jpg";
+import reachFrontpage from "@/assets/reach-frontpage.jpg";
+import childrenLearning from "@/assets/children-learn.jpg";
+import communitySupport from "@/assets/community.jpg";
 
 const Home = () => {
   const stats = [
@@ -26,8 +26,11 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative py-20 px-6 overflow-hidden">
         <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroClassroom})` }}
+          className="absolute inset-0 bg-cover"
+          style={{ 
+            backgroundImage: `url(${reachFrontpage})`,
+            backgroundPosition: 'center 35%'
+          }}
         >
           <div className="absolute inset-0 bg-gradient-hero/90"></div>
         </div>
@@ -209,7 +212,7 @@ const Home = () => {
             
             <div className="relative">
               <img 
-                src={childrenLearning} 
+                src={communitySupport} 
                 alt="Children learning English in classroom"
                 className="rounded-2xl shadow-warm w-full"
               />
@@ -736,7 +739,7 @@ const Home = () => {
       <section className="py-20 px-6 relative overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${communitySupport})` }}
+          style={{ backgroundImage: `url(${childrenLearning})` }}
         >
           <div className="absolute inset-0 bg-gradient-hero/85"></div>
         </div>
