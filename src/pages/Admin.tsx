@@ -32,7 +32,19 @@ import {
   X,
   RefreshCw
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+
+
+import { studentService, Student } from "@/services/studentServices";
+import { useNotifications } from "../contexts/NotificationContext";
+import { Timestamp } from "firebase/firestore";
+import { CheckCircle, Loader2 } from "lucide-react";
+import { updatesService, Update } from "@/services/updateServices";
+import { uploadImages, saveStory, addTailwindClassesToHtml } from "@/services/blogService";
+import { callGenerateBlog } from "@/lib/firebase";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+
+import { toast, useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAnnouncements } from "@/contexts/AnnouncementContext";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -55,12 +67,53 @@ import {
   type Donation
 } from "@/services/donorService";
 
+
+type Generated = {
+  title: string;
+  summary: string;
+  bodyHtml: string;
+  tags: string[];
+  category: string;
+  readingMinutes: number;
+};
+
 const Admin = () => {
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [blogPrompt, setBlogPrompt] = useState("");
   const [generatedBlog, setGeneratedBlog] = useState("");
+  const navigate = useNavigate();
+
+  const { logout } = useAuth();
+  // Where the uploaded images end up (download URLs for preview/publish)
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
+  // Keep existing string preview, but also store the structured result:
+  const [generated, setGenerated] = useState<Generated | null>(null);
+
+  // Real Firebase state management
+  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSchool, setSelectedSchool] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("");
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [programUpdates, setProgramUpdates] = useState<Update[]>([]);
+  const [newUpdate, setNewUpdate] = useState({
+    type: "Program Update" as const,
+    title: "",
+    message: "",
+    school: "",
+    impactMetric: "",
+  });
+
+  // Quick Grade Entry Form State
+  const [quickGradeForm, setQuickGradeForm] = useState({
+    studentName: "",
+    school: "",
+    class: "",
+    englishGrade: "",
+    mathGrade: "",
+  });
 
   // Announcement state
   const [announcements, setAnnouncements] = useState([
@@ -133,8 +186,102 @@ const Admin = () => {
     }
   ]);
 
+  const checkForAchievements = async (
+    student: Student,
+    previousGrades: { english: number; math: number }
+  ) => {
+    const englishImprovement = student.english - previousGrades.english;
+    const mathImprovement = student.math - previousGrades.math;
+
+    // Check for significant achievements
+    if (student.english >= 95 || student.math >= 95) {
+      // Excellent performance achievement
+      await updatesService.addUpdate({
+        type: "Student Achievement",
+        description: `${student.name} (${student.school}) scored ${
+          student.english >= 95
+            ? student.english + "% in English"
+            : student.math + "% in Math"
+        }! Thanks to your support, students are reaching new heights.`,
+        createdAt: Timestamp.now(),
+      });
+    } else if (englishImprovement >= 5 || mathImprovement >= 5) {
+      // Significant improvement achievement
+      const subject = englishImprovement >= 5 ? "English" : "Math";
+      const improvement =
+        englishImprovement >= 5 ? englishImprovement : mathImprovement;
+
+      await updatesService.addUpdate({
+        type: "Student Achievement",
+        description: `${student.name} (${student.school}) improved their ${subject} grade by ${improvement} points! Your donations are making a real difference in children's learning journey.`,
+        createdAt: Timestamp.now(),
+      });
+    }
+  };
+
   const schools = ["Sunshine Kindergarten", "Rainbow Learning Center", "Hope Valley School", "Bright Futures Academy"];
   const regions = ["Sham Shui Po", "Kwun Tong", "Tin Shui Wai", "Tuen Mun"];
+
+  const handleEditStudent = (student: Student) => {
+    setEditingStudent(student);
+    setQuickGradeForm({
+      studentName: student.name,
+      school: student.school,
+      class: student.class,
+      englishGrade: student.english.toString(),
+      mathGrade: student.math.toString(),
+    });
+  };
+
+  const handleUpdateStudent = async () => {
+    if (!editingStudent || !editingStudent.id) return;
+
+    const englishGrade = parseInt(quickGradeForm.englishGrade);
+    const mathGrade = parseInt(quickGradeForm.mathGrade);
+    const previousGrades = {
+      english: editingStudent.english,
+      math: editingStudent.math,
+    };
+
+    try {
+      setSaving(true);
+      await studentService.updateStudentGrades(editingStudent.id, {
+        english: englishGrade,
+        math: mathGrade,
+      });
+
+      // Check for achievements after updating
+      const updatedStudent = {
+        ...editingStudent,
+        english: englishGrade,
+        math: mathGrade,
+      };
+      await checkForAchievements(updatedStudent, previousGrades);
+
+      toast({
+        title: "Student Updated!",
+        description: `${editingStudent.name}'s grades have been updated and donors will be notified!`,
+      });
+
+      setEditingStudent(null);
+      setQuickGradeForm({
+        studentName: "",
+        school: "",
+        class: "",
+        englishGrade: "",
+        mathGrade: "",
+      });
+    } catch (error) {
+      console.error("Error updating student:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update student",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Donor management state
   const [donors, setDonors] = useState<Donor[]>([]);
@@ -221,6 +368,119 @@ const Admin = () => {
 
     fetchInitialData();
 
+    const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      setUploadedImages(files);
+      toast({
+        title: "Images Uploaded",
+        description: `${files.length} image(s) uploaded successfully`,
+      });
+    };
+    
+    const handleGenerateBlog = async () => {
+      if (!blogPrompt || uploadedImages.length === 0) {
+        toast({
+          title: "Missing Information",
+          description: "Please upload images and provide a description",
+          variant: "destructive",
+        });
+        return;
+      }
+    
+      try {
+        setIsGenerating(true);
+        setGenerated(null);
+        setGeneratedBlog(""); // clear the right pane
+    
+        // 1) Upload images to Firebase Storage and collect public URLs
+        const uploaded = await uploadImages(uploadedImages);
+        const urls = uploaded.map((u) => u.url);
+        setUploadedImageUrls(urls);
+    
+        // 2) Call your Cloud Function (OpenAI behind the scenes)
+        const res = await callGenerateBlog({
+          prompt: blogPrompt,
+          imageUrls: urls,
+        });
+    
+        if (!res.success || !res.blog) {
+          throw new Error(res.error || "Generation failed");
+        }
+    
+        // 3) Save the structured blog AND set your current preview string with HTML
+    
+        res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
+        setGenerated(res.blog);
+        const html = `
+          <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
+          <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
+          ${res.blog.bodyHtml}
+          <div class="mt-4 text-xs text-muted-foreground">
+            Category: ${res.blog.category} • ${res.blog.readingMinutes} min read
+          </div>
+        `;
+        setGeneratedBlog(html);
+    
+        toast({
+          title: "Blog Generated Successfully!",
+          description: "Your AI-generated blog post is ready for review",
+        });
+      } catch (e: any) {
+        console.error(e);
+        toast({
+          title: "Generation failed",
+          description: e?.message || "Something went wrong",
+          variant: "destructive",
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+    
+    const publishBlog = async () => {
+      if (!generated) {
+        toast({
+          title: "Nothing to publish",
+          description: "Generate a story first.",
+          variant: "destructive",
+        });
+        return;
+      }
+    
+      try {
+        // Save to Firestore `stories` collection
+        const id = await saveStory({
+          title: generated.title,
+          summary: generated.summary,
+          bodyHtml: generated.bodyHtml,
+          tags: generated.tags,
+          category: generated.category,
+          readingMinutes: generated.readingMinutes,
+          images: uploadedImageUrls.map((url) => ({ url })),
+          author: "REACH Team",
+        });
+    
+        toast({
+          title: "Blog Published!",
+          description: `Story ID: ${id}`,
+        });
+    
+        // Reset UI
+        setGeneratedBlog("");
+        setGenerated(null);
+        setBlogPrompt("");
+        setUploadedImages([]);
+        setUploadedImageUrls([]);
+      } catch (e: any) {
+        console.error(e);
+        toast({
+          title: "Publish failed",
+          description: e?.message || "Could not save the story",
+          variant: "destructive",
+        });
+      }
+    };
+
     // Set up real-time listener
     const unsubscribe = subscribeToDonors((updatedDonors) => {
       setDonors(updatedDonors);
@@ -264,57 +524,99 @@ const Admin = () => {
       return;
     }
 
-    setIsGenerating(true);
-    
-    // Simulate AI blog generation
-    setTimeout(() => {
-      const generatedContent = `# A Heartwarming Day at Our Partner School
+    try {
+      setIsGenerating(true);
+      setGenerated(null);
+      setGeneratedBlog(""); // clear the right pane
 
-${blogPrompt}
+      // 1) Upload images to Firebase Storage and collect public URLs
+      const uploaded = await uploadImages(uploadedImages);
+      const urls = uploaded.map((u) => u.url);
+      setUploadedImageUrls(urls);
 
-## The Magic of Learning
+      // 2) Call your Cloud Function (OpenAI behind the scenes)
+      const res = await callGenerateBlog({
+        prompt: blogPrompt,
+        imageUrls: urls,
+      });
 
-Today was filled with incredible moments as we witnessed the power of education in action. The children's enthusiasm and curiosity remind us why REACH's mission is so important.
+      if (!res.success || !res.blog) {
+        throw new Error(res.error || "Generation failed");
+      }
 
-### Key Highlights:
+      // 3) Save the structured blog AND set your current preview string with HTML
 
-- **Interactive Learning**: Students engaged with new English vocabulary through fun activities
-- **Creative Expression**: Art and storytelling combined to help children express themselves
-- **Community Support**: Thanks to generous donors, we provided new learning materials
+      res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
+      setGenerated(res.blog);
+      const html = `
+        <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
+        <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
+        ${res.blog.bodyHtml}
+        <div class="mt-4 text-xs text-muted-foreground">
+          Category: ${res.blog.category} • ${res.blog.readingMinutes} min read
+        </div>
+      `;
+      setGeneratedBlog(html);
 
-### Student Achievements:
-
-Our dedicated teachers noticed remarkable progress in several areas:
-- Improved pronunciation and confidence in speaking English
-- Better reading comprehension skills
-- Increased participation in classroom discussions
-
-### Looking Forward:
-
-With continued support from our amazing donor community, we can expand these programs to reach even more children. Every donation truly makes a difference in these young lives.
-
-*"Education is the most powerful weapon which you can use to change the world."* - Nelson Mandela
-
-Thank you for being part of this incredible journey of transformation!`;
-
-      setGeneratedBlog(generatedContent);
-      setIsGenerating(false);
       toast({
         title: "Blog Generated Successfully!",
         description: "Your AI-generated blog post is ready for review",
       });
-    }, 3000);
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: "Generation failed",
+        description: e?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const publishBlog = () => {
-    toast({
-      title: "Blog Published!",
-      description: "Your story has been shared with the community",
-    });
-    setGeneratedBlog("");
-    setBlogPrompt("");
-    setUploadedImages([]);
-  };
+  const publishBlog = async () => {
+    if (!generated) {
+      toast({
+        title: "Nothing to publish",
+        description: "Generate a story first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Save to Firestore `stories` collection
+      const id = await saveStory({
+        title: generated.title,
+        summary: generated.summary,
+        bodyHtml: generated.bodyHtml,
+        tags: generated.tags,
+        category: generated.category,
+        readingMinutes: generated.readingMinutes,
+        images: uploadedImageUrls.map((url) => ({ url })),
+        author: "REACH Team",
+      });
+
+      toast({
+        title: "Blog Published!",
+        description: `Story ID: ${id}`,
+      });
+
+      // Reset UI
+      setGeneratedBlog("");
+      setGenerated(null);
+      setBlogPrompt("");
+      setUploadedImages([]);
+      setUploadedImageUrls([]);
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: "Publish failed",
+        description: e?.message || "Could not save the story",
+        variant: "destructive",
+      });
+    }
+  }; 
 
   // Announcement management functions
   const addAnnouncement = () => {
@@ -529,11 +831,99 @@ Thank you for being part of this incredible journey of transformation!`;
     }
   };
 
+  const handleQuickGradeSubmit = async () => {
+    if (
+      !quickGradeForm.studentName ||
+      !quickGradeForm.school ||
+      !quickGradeForm.englishGrade ||
+      !quickGradeForm.mathGrade
+    ) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const englishGrade = parseInt(quickGradeForm.englishGrade);
+      const mathGrade = parseInt(quickGradeForm.mathGrade);
+
+      // Check if student already exists
+      const existingStudent = students.find(
+        (s) =>
+          s.name.toLowerCase() === quickGradeForm.studentName.toLowerCase() &&
+          s.school === quickGradeForm.school
+      );
+
+      if (existingStudent && existingStudent.id) {
+        // Update existing student
+        await studentService.updateStudentGrades(existingStudent.id.toString(), {
+          english: englishGrade,
+          math: mathGrade,
+        });
+
+        toast({
+          title: "Student Updated!",
+          description: `${quickGradeForm.studentName}'s grades have been updated and donors will be notified!`,
+        });
+      } else {
+        // Add new student
+        await studentService.addStudent({
+          name: quickGradeForm.studentName,
+          school: quickGradeForm.school,
+          class: quickGradeForm.class,
+          english: englishGrade,
+          math: mathGrade,
+          region: "Tin Shui Wai",
+        });
+
+        toast({
+          title: "New Student Added!",
+          description: `${quickGradeForm.studentName} has been added and donors will be notified!`,
+        });
+      }
+
+      // Reset form
+      setQuickGradeForm({
+        studentName: "",
+        school: "",
+        class: "",
+        englishGrade: "",
+        mathGrade: "",
+      });
+    } catch (error) {
+      console.error("Error saving student:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save student data",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+  
   const clearAllFilters = () => {
     setSelectedDonorSchool("");
     setSelectedDonorType("");
     setDonorSearchTerm("");
   };
+
+  // Filter students
+  const filteredStudents = students.filter((student) => {
+    const matchesSearch =
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.school.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.class.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSchool = !selectedSchool || student.school === selectedSchool;
+    const matchesRegion = !selectedRegion || student.region === selectedRegion;
+
+    return matchesSearch && matchesSchool && matchesRegion;
+  });
 
   // Filter donors with Firebase
   const [filteredDonors, setFilteredDonors] = useState<Donor[]>([]);
@@ -1316,18 +1706,35 @@ Thank you for being part of this incredible journey of transformation!`;
                 <div className="grid md:grid-cols-4 gap-4 mb-6">
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search students..." className="pl-10" />
+                    <Input
+                      placeholder="Search students..."
+                      className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
                   </div>
-                  <select className="px-3 py-2 border border-input bg-background rounded-md">
+                  <select
+                    className="px-3 py-2 border border-input bg-background rounded-md"
+                    value={selectedSchool}
+                    onChange={(e) => setSelectedSchool(e.target.value)}
+                  >
                     <option value="">All Schools</option>
-                    {schools.map(school => (
-                      <option key={school} value={school}>{school}</option>
+                    {schools.map((school) => (
+                      <option key={school} value={school}>
+                        {school}
+                      </option>
                     ))}
                   </select>
-                  <select className="px-3 py-2 border border-input bg-background rounded-md">
+                  <select
+                    className="px-3 py-2 border border-input bg-background rounded-md"
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                  >
                     <option value="">All Regions</option>
-                    {regions.map(region => (
-                      <option key={region} value={region}>{region}</option>
+                    {regions.map((region) => (
+                      <option key={region} value={region}>
+                        {region}
+                      </option>
                     ))}
                   </select>
                   <select className="px-3 py-2 border border-input bg-background rounded-md">
@@ -1342,87 +1749,230 @@ Thank you for being part of this incredible journey of transformation!`;
                 </div>
 
                 {/* Quick Add Grade Form */}
-                <Card className="mb-6 bg-accent/10 border-accent/20">
+                <Card
+                  className={`mb-6 ${
+                    editingStudent
+                      ? "bg-blue-50 border-blue-200"
+                      : "bg-accent/10 border-accent/20"
+                  }`}
+                >
                   <CardHeader>
-                    <CardTitle className="text-lg">Quick Grade Entry</CardTitle>
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <span>
+                        {editingStudent
+                          ? `Editing ${editingStudent.name}`
+                          : "Quick Grade Entry"}
+                      </span>
+                      {editingStudent && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingStudent(null);
+                            setQuickGradeForm({
+                              studentName: "",
+                              school: "",
+                              class: "",
+                              englishGrade: "",
+                              mathGrade: "",
+                            });
+                          }}
+                        >
+                          Cancel Edit
+                        </Button>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-6 gap-4">
-                      <Input placeholder="Student Name" />
-                      <select className="px-3 py-2 border border-input bg-background rounded-md">
+                      <Input
+                        placeholder="Student Name"
+                        value={quickGradeForm.studentName}
+                        onChange={(e) =>
+                          setQuickGradeForm({
+                            ...quickGradeForm,
+                            studentName: e.target.value,
+                          })
+                        }
+                        disabled={!!editingStudent} // Disable name editing when editing existing student
+                      />
+                      <select
+                        className="px-3 py-2 border border-input bg-background rounded-md"
+                        value={quickGradeForm.school}
+                        onChange={(e) =>
+                          setQuickGradeForm({
+                            ...quickGradeForm,
+                            school: e.target.value,
+                          })
+                        }
+                        disabled={!!editingStudent} // Disable school editing when editing existing student
+                      >
                         <option value="">Select School</option>
-                        {schools.map(school => (
-                          <option key={school} value={school}>{school}</option>
+                        {schools.map((school) => (
+                          <option key={school} value={school}>
+                            {school}
+                          </option>
                         ))}
                       </select>
-                      <Input placeholder="Class (e.g., K2A)" />
-                      <Input placeholder="English Grade" type="number" min="0" max="100" />
-                      <Input placeholder="Math Grade" type="number" min="0" max="100" />
-                      <Button className="bg-secondary hover:bg-secondary/90">
-                        <Save className="w-4 h-4 mr-2" />
-                        Save
+                      <Input
+                        placeholder="Class (e.g., K2A)"
+                        value={quickGradeForm.class}
+                        onChange={(e) =>
+                          setQuickGradeForm({
+                            ...quickGradeForm,
+                            class: e.target.value,
+                          })
+                        }
+                        disabled={!!editingStudent} // Disable class editing when editing existing student
+                      />
+                      <Input
+                        placeholder="English Grade"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={quickGradeForm.englishGrade}
+                        onChange={(e) =>
+                          setQuickGradeForm({
+                            ...quickGradeForm,
+                            englishGrade: e.target.value,
+                          })
+                        }
+                      />
+                      <Input
+                        placeholder="Math Grade"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={quickGradeForm.mathGrade}
+                        onChange={(e) =>
+                          setQuickGradeForm({
+                            ...quickGradeForm,
+                            mathGrade: e.target.value,
+                          })
+                        }
+                      />
+                      <Button
+                        className="bg-secondary hover:bg-secondary/90"
+                        onClick={
+                          editingStudent
+                            ? handleUpdateStudent
+                            : handleQuickGradeSubmit
+                        }
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : editingStudent ? (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Update & Notify
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save & Notify
+                          </>
+                        )}
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Students Table */}
-                <div className="space-y-4">
-                  {students.map((student) => (
-                    <Card key={student.id} className="card-hover">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
-                              {student.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-lg">{student.name}</h3>
-                              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <School className="w-4 h-4" />
-                                  <span>{student.school}</span>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                    <p className="text-muted-foreground">Loading students...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredStudents.map((student) => (
+                      <Card key={student.id} className="card-hover">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold">
+                                {student.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-lg">
+                                  {student.name}
+                                </h3>
+                                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                                  <div className="flex items-center space-x-1">
+                                    <School className="w-4 h-4" />
+                                    <span>{student.school}</span>
+                                  </div>
+                                  <span>•</span>
+                                  <span>Class {student.class}</span>
+                                  <span>•</span>
+                                  <span>{student.region}</span>
                                 </div>
-                                <span>•</span>
-                                <span>Class {student.class}</span>
-                                <span>•</span>
-                                <span>{student.region}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center space-x-6">
+                              {/* Grades Display */}
+                              <div className="text-center">
+                                                                 <p className="text-2xl font-bold text-primary">
+                                   {student.englishGrade}
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   English
+                                 </p>
+                               </div>
+                               <div className="text-center">
+                                 <p className="text-2xl font-bold text-secondary">
+                                   {student.mathGrade}
+                                 </p>
+                                 <p className="text-xs text-muted-foreground">
+                                   Math
+                                 </p>
+                               </div>
+
+                              {/* Actions */}
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditStudent({
+                                    ...student,
+                                    id: student.id.toString(),
+                                    english: student.englishGrade,
+                                    math: student.mathGrade,
+                                    lastUpdated: new Date(student.lastUpdated)
+                                  } as Student)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
                           </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
 
-                          <div className="flex items-center space-x-6">
-                            {/* Grades Display */}
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-primary">{student.englishGrade}</p>
-                              <p className="text-xs text-muted-foreground">English</p>
-                            </div>
-                            <div className="text-center">
-                              <p className="text-2xl font-bold text-secondary">{student.mathGrade}</p>
-                              <p className="text-xs text-muted-foreground">Math</p>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex space-x-2">
-                              <Button variant="outline" size="sm">
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button variant="outline" size="sm">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm text-muted-foreground">
-                            Last updated: {new Date(student.lastUpdated).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                {!loading && filteredStudents.length === 0 && (
+                  <div className="text-center py-8">
+                    <GraduationCap className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">
+                      No students found
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {searchTerm || selectedSchool
+                        ? "Try adjusting your search criteria or add a new student."
+                        : "Start by adding your first student using the form above."}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
