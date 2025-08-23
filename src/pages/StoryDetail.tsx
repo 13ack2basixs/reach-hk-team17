@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { addTailwindClassesToHtml } from "@/services/blogService";
 
 type Story = {
   title: string;
@@ -61,10 +62,10 @@ export default function StoryDetail() {
           ))}
           <Badge variant="outline">{story.readingMinutes} min read</Badge>
         </div>
-
+          
         <div
           className="prose max-w-none"
-          dangerouslySetInnerHTML={{ __html: story.bodyHtml }}
+          dangerouslySetInnerHTML={{ __html: addTailwindClassesToHtml(story.bodyHtml) }}
         />
 
         {/* Optional: gallery of the rest of images */}
@@ -85,3 +86,4 @@ export default function StoryDetail() {
     </div>
   );
 }
+

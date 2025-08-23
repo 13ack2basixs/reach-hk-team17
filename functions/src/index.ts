@@ -2,6 +2,8 @@ import { onCall } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import OpenAI from "openai";
 
+import { basePrompt, system} from "./prompts";
+
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 
 /** Heuristic formatter:
@@ -104,32 +106,26 @@ export const generateBlog = onCall(
   async (request) => {
     try {
       const { prompt, imageUrls } = (request.data || {}) as {
-        prompt?: string;
-        imageUrls?: string[];
+        // For backward compatibility: `prompt` is now a brief description
+        prompt?: string;       // e.g., "Children reading with volunteers at Sham Shui Po centre"
+        imageUrls?: string[];  // up to 4 images
       };
-      if (!prompt || typeof prompt !== "string") {
-        return { success: false, error: "Missing prompt" };
-      }
+
+      const description =
+        typeof prompt === "string" && prompt.trim().length > 0
+          ? prompt.trim()
+          : "A recent Project Reach activity supporting underserved kindergarteners in Hong Kong.";
 
       const openai = new OpenAI({ apiKey: OPENAI_API_KEY.value() });
 
-      const system =
-        [
-          "You are a warm, hopeful storyteller for an education charity.",
-          "Return STRICT JSON ONLY (no code fences/markdown).",
-          "JSON keys:",
-          '{ "title":string(<=80), "summary":string(1–2 sentences),',
-          '  "bodyHtml":string(VALID HTML using <h3>, <p>, optional <ul><li>),',
-          '  "category":"Student Stories"|"Program Updates"|"Community"|"Success Stories",',
-          '  "tags":string[], "readingMinutes": integer 3..8 }',
-        ].join("\n");
+      const filledPrompt = basePrompt.replace("{DESCRIPTION}", description);
 
       const userParts: any[] = [
         {
           type: "text",
           text:
-            `Create a donor‑friendly blog post from this description.\n\n` +
-            `PROMPT: ${prompt}\n\n` +
+            `Create a donor-friendly blog post from the description below.\n\n` +
+            `BASE INSTRUCTIONS:\n${filledPrompt}\n\n` +
             `Output exactly the JSON as specified above.`,
         },
       ];
@@ -139,6 +135,8 @@ export const generateBlog = onCall(
           userParts.push({ type: "image_url", image_url: { url } });
         }
       }
+
+      console.log(userParts);
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
