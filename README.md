@@ -34,9 +34,11 @@ REACH is dedicated to providing educational opportunities for children in need. 
   - Individual vs Corporate donor tracking
 
 ### 📖 Stories/Blogs
+- Write Blogs with the help of GenAi
 - Dynamic content from Firebase
 - Category filtering and search
 - Featured stories with rich media
+
 
 ## 🛠 Technology Stack
 
