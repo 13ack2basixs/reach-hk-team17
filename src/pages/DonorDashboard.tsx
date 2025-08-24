@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,10 +25,14 @@ import {
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotifications } from "../contexts/NotificationContext";
+import { updatesService } from "@/services/updateServices";
 
 const DonorDashboard = () => {
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [approvedUpdates, setApprovedUpdates] = useState([]);
+  const [loadingUpdates, setLoadingUpdates] = useState(true);
+
   const {
     state: notificationState,
     markAsRead,
@@ -112,12 +116,59 @@ const DonorDashboard = () => {
     }
   };
 
-  const handleMarkAsRead = (notificationId: string) => {
-    markAsRead(notificationId);
+  const handleMarkUpdateAsRead = async (updateId: string) => {
+    try {
+      // Optimistically update local state immediately
+      setApprovedUpdates((prevUpdates) =>
+        prevUpdates.map((update) =>
+          update.id === updateId ? { ...update, read: true } : update
+        )
+      );
+
+      // Then update Firebase
+      await updatesService.markUpdateAsRead(updateId, email);
+    } catch (error) {
+      console.error("Error marking update as read:", error);
+
+      // Revert optimistic update on error
+      setApprovedUpdates((prevUpdates) =>
+        prevUpdates.map((update) =>
+          update.id === updateId ? { ...update, read: false } : update
+        )
+      );
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
+  const handleMarkAllUpdatesAsRead = async () => {
+    const unreadUpdates = approvedUpdates.filter((update) => !update.read);
+
+    try {
+      // Optimistically update local state immediately
+      setApprovedUpdates((prevUpdates) =>
+        prevUpdates.map((update) => ({ ...update, read: true }))
+      );
+
+      // Then update Firebase
+      await Promise.all(
+        unreadUpdates.map((update) =>
+          updatesService.markUpdateAsRead(update.id, email)
+        )
+      );
+    } catch (error) {
+      console.error("Error marking all updates as read:", error);
+
+      // Revert optimistic updates on error
+      setApprovedUpdates((prevUpdates) =>
+        prevUpdates.map((update) => {
+          const wasUnread = unreadUpdates.some((u) => u.id === update.id);
+          return wasUnread ? { ...update, read: false } : update;
+        })
+      );
+    }
+  };
+
+  const getUnreadCount = () => {
+    return approvedUpdates.filter((update) => !update.read).length;
   };
 
   const formatNotificationDate = (dateString: string) => {
@@ -133,6 +184,39 @@ const DonorDashboard = () => {
       return date.toLocaleDateString();
     }
   };
+
+  useEffect(() => {
+    if (!isLoggedIn || !email) return;
+
+    console.log("🔊 Setting up updates listener for:", email);
+
+    const unsubscribeApprovedUpdates =
+      updatesService.subscribeToApprovedUpdatesForDonor(email, (updates) => {
+        console.log("📨 Received updates from Firebase:", updates.length);
+
+        const transformedUpdates = updates.map((update) => ({
+          id: update.id,
+          type: update.type,
+          message: update.description,
+          description: update.description,
+          date: update.createdAt?.toDate?.()
+            ? update.createdAt.toDate().toISOString()
+            : new Date().toISOString(),
+          read: update.read || false,
+          isRecent: false,
+          studentName: update.studentName,
+          school: update.school,
+        }));
+
+        setApprovedUpdates(transformedUpdates);
+        setLoadingUpdates(false);
+      });
+
+    return () => {
+      console.log("🔇 Cleaning up updates listener");
+      unsubscribeApprovedUpdates();
+    };
+  }, [isLoggedIn, email]);
 
   // Login Form
   if (!isLoggedIn) {
@@ -231,9 +315,9 @@ const DonorDashboard = () => {
               <Button variant="outline" className="relative">
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
-                {notificationState.unreadCount > 0 && (
+                {getUnreadCount() > 0 && (
                   <Badge className="absolute -top-2 -right-2 w-5 h-5 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
-                    {notificationState.unreadCount}
+                    {getUnreadCount()}
                   </Badge>
                 )}
               </Button>
@@ -247,9 +331,9 @@ const DonorDashboard = () => {
             <TabsTrigger value="impact">My Impact</TabsTrigger>
             <TabsTrigger value="updates" className="relative">
               Updates
-              {notificationState.unreadCount > 0 && (
+              {getUnreadCount() > 0 && (
                 <Badge className="absolute -top-1 -right-1 w-4 h-4 p-0 flex items-center justify-center bg-destructive text-destructive-foreground text-xs">
-                  {notificationState.unreadCount}
+                  {getUnreadCount()}
                 </Badge>
               )}
             </TabsTrigger>
@@ -447,39 +531,38 @@ const DonorDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-
           </TabsContent>
 
-          {/* Updates Tab - Now showing Firebase updates */}
+          {/* Updates Tab - Now showing only approved Firebase updates */}
           <TabsContent value="updates" className="space-y-6">
             {/* Header with actions */}
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-semibold">Real-time Updates</h3>
               <div className="flex items-center space-x-2">
-                {notificationState.unreadCount > 0 && (
+                {getUnreadCount() > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleMarkAllAsRead}
+                    onClick={handleMarkAllUpdatesAsRead}
                   >
-                    Mark All as Read ({notificationState.unreadCount})
+                    Mark All as Read ({getUnreadCount()})
                   </Button>
                 )}
                 <Badge variant="outline">
-                  {notificationState.notifications.length} total updates
+                  {approvedUpdates.length} total updates
                 </Badge>
               </div>
             </div>
 
             {/* Loading state */}
-            {notificationState.loading ? (
+            {loadingUpdates ? (
               <div className="text-center py-8">
                 <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
                 <p className="text-muted-foreground">Loading your updates...</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {notificationState.notifications.length === 0 ? (
+                {approvedUpdates.length === 0 ? (
                   <Card className="border-0 shadow-soft">
                     <CardContent className="p-8 text-center">
                       <BookOpen className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -488,22 +571,20 @@ const DonorDashboard = () => {
                       </h3>
                       <p className="text-muted-foreground">
                         Updates about student progress and program milestones
-                        will appear here.
+                        will appear here once approved.
                       </p>
                     </CardContent>
                   </Card>
                 ) : (
-                  notificationState.notifications.map((notification) => {
-                    const isRecent =
-                      notification.isRecent ||
-                      isRecentNotification(notification.date || "");
+                  approvedUpdates.map((update) => {
+                    const isRecent = isRecentNotification(update.date || "");
                     return (
                       <Card
-                        key={notification.id}
+                        key={update.id}
                         className={`border-0 shadow-soft transition-all ${
-                          !notification.read
+                          !update.read
                             ? "bg-primary/5 border-l-4 border-l-primary"
-                            : ""
+                            : "bg-muted/10"
                         } ${
                           isRecent ? "ring-2 ring-yellow-200 bg-yellow-50" : ""
                         }`}
@@ -511,15 +592,13 @@ const DonorDashboard = () => {
                         <CardContent className="p-6">
                           <div className="flex items-start space-x-4">
                             <div className="flex-shrink-0 mt-1">
-                              {getImpactIcon(notification.type)}
+                              {getImpactIcon(update.type)}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center space-x-2">
-                                  <Badge variant="outline">
-                                    {notification.type}
-                                  </Badge>
-                                  {!notification.read && (
+                                  <Badge variant="outline">{update.type}</Badge>
+                                  {!update.read && (
                                     <Badge
                                       variant="secondary"
                                       className="text-xs"
@@ -537,19 +616,17 @@ const DonorDashboard = () => {
                                   <div className="flex items-center space-x-1 text-sm text-muted-foreground">
                                     <Calendar className="w-4 h-4" />
                                     <span>
-                                      {notification.date
-                                        ? formatNotificationDate(
-                                            notification.date
-                                          )
+                                      {update.date
+                                        ? formatNotificationDate(update.date)
                                         : "Recently"}
                                     </span>
                                   </div>
-                                  {!notification.read && (
+                                  {!update.read && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() =>
-                                        handleMarkAsRead(notification.id)
+                                        handleMarkUpdateAsRead(update.id)
                                       }
                                     >
                                       <CheckCircle className="w-4 h-4" />
@@ -558,9 +635,14 @@ const DonorDashboard = () => {
                                 </div>
                               </div>
                               <p className="text-sm leading-relaxed mb-3">
-                                {notification.message ||
-                                  notification.description}
+                                {update.message || update.description}
                               </p>
+                              {update.studentName && update.school && (
+                                <div className="text-sm text-muted-foreground mb-3">
+                                  <strong>{update.studentName}</strong> from{" "}
+                                  <strong>{update.school}</strong>
+                                </div>
+                              )}
                               <div className="flex items-center space-x-2 mt-3">
                                 <CheckCircle className="w-4 h-4 text-green-500" />
                                 <span className="text-sm text-green-700 font-medium">

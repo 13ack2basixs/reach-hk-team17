@@ -127,44 +127,15 @@ const Admin = () => {
   });
 
   // Announcement state
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      title: "Lily passed her first English test!",
-      content:
-        "We're so proud of Lily from Sunshine Kindergarten! She scored 95% on her first English vocabulary test. Her hard work and dedication are truly inspiring.",
-      studentName: "Lily",
-      school: "Sunshine Kindergarten",
-      date: "2024-01-15",
-      isActive: true,
-    },
-    {
-      id: 2,
-      title: "Tommy's reading progress amazes everyone!",
-      content:
-        "Tommy has improved his reading skills dramatically! He can now read simple English books independently. His confidence has grown so much.",
-      studentName: "Tommy",
-      school: "Rainbow Learning Center",
-      date: "2024-01-14",
-      isActive: true,
-    },
-    {
-      id: 3,
-      title: "Emma leads her first English conversation!",
-      content:
-        "Emma took the lead in today's English conversation class! She helped other students with pronunciation and showed great leadership skills.",
-      studentName: "Emma",
-      school: "Hope Valley School",
-      date: "2024-01-13",
-      isActive: true,
-    },
-  ]);
+  const [allUpdates, setAllUpdates] = useState<Update[]>([]);
+  const [pendingUpdates, setPendingUpdates] = useState<Update[]>([]);
+  const [approvedUpdates, setApprovedUpdates] = useState<Update[]>([]);
 
+  // Update the newAnnouncement state to include type
   const [newAnnouncement, setNewAnnouncement] = useState({
-    title: "",
     content: "",
-    studentName: "",
     school: "",
+    type: "Program Update" as "Program Update" | "Milestone Reached",
   });
 
   const checkForAchievements = async (
@@ -223,29 +194,22 @@ const Admin = () => {
 
     const englishGrade = parseInt(quickGradeForm.englishGrade);
     const mathGrade = parseInt(quickGradeForm.mathGrade);
-    const previousGrades = {
-      english: editingStudent.english,
-      math: editingStudent.math,
-    };
 
     try {
       setSaving(true);
-      await studentService.updateStudentGrades(editingStudent.id, {
-        english: englishGrade,
-        math: mathGrade,
-      });
-
-      // Check for achievements after updating
-      const updatedStudent = {
-        ...editingStudent,
-        english: englishGrade,
-        math: mathGrade,
-      };
-      await checkForAchievements(updatedStudent, previousGrades);
+      // Pass current student data for comparison
+      await studentService.updateStudentGrades(
+        editingStudent.id,
+        {
+          english: englishGrade,
+          math: mathGrade,
+        },
+        editingStudent // Pass current student for improvement comparison
+      );
 
       toast({
         title: "Student Updated!",
-        description: `${editingStudent.name}'s grades have been updated and donors will be notified!`,
+        description: `${editingStudent.name}'s grades have been updated. Significant improvements will be pending admin approval before notifying donors.`,
       });
 
       setEditingStudent(null);
@@ -383,7 +347,18 @@ const Admin = () => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubscribeUpdates = updatesService.subscribeToAllUpdates(
+      (updates) => {
+        setAllUpdates(updates);
+        setPendingUpdates(updates.filter((u) => u.isPending === true));
+        setApprovedUpdates(updates.filter((u) => u.isPending === false));
+      }
+    );
+
+    return () => {
+      unsubscribe();
+      unsubscribeUpdates();
+    };
   }, [toast]);
 
   // Firebase integration
@@ -685,11 +660,11 @@ const Admin = () => {
   };
 
   // Announcement management functions
-  const addAnnouncement = () => {
+  // Replace addAnnouncement function
+  const addAnnouncement = async () => {
     if (
-      !newAnnouncement.title ||
+      !newAnnouncement.type ||
       !newAnnouncement.content ||
-      !newAnnouncement.studentName ||
       !newAnnouncement.school
     ) {
       toast({
@@ -700,45 +675,64 @@ const Admin = () => {
       return;
     }
 
-    const announcement = {
-      id: Date.now(),
-      ...newAnnouncement,
-      date: new Date().toISOString().split("T")[0],
-      isActive: true,
-    };
+    try {
+      await updatesService.addPendingUpdate({
+        type: newAnnouncement.type,
+        description: newAnnouncement.content,
+        school: newAnnouncement.school,
+      });
 
-    setAnnouncements([announcement, ...announcements]);
-    setNewAnnouncement({
-      title: "",
-      content: "",
-      studentName: "",
-      school: "",
-    });
+      setNewAnnouncement({
+        content: "",
+        school: "",
+        type: "Program Update",
+      });
 
-    toast({
-      title: "Announcement Added!",
-      description: "Your announcement has been published",
-    });
+      toast({
+        title: "Announcement Submitted!",
+        description: "Your announcement is pending approval",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit announcement",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleAnnouncementStatus = (id: number) => {
-    setAnnouncements(
-      announcements.map((announcement) =>
-        announcement.id === id
-          ? { ...announcement, isActive: !announcement.isActive }
-          : announcement
-      )
-    );
+  // Add approval function
+  const handleApproveUpdate = async (id: string) => {
+    try {
+      await updatesService.approveUpdate(id);
+      toast({
+        title: "Update Approved!",
+        description: "The update is now live for donors",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to approve update",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteAnnouncement = (id: number) => {
-    setAnnouncements(
-      announcements.filter((announcement) => announcement.id !== id)
-    );
-    toast({
-      title: "Announcement Deleted",
-      description: "The announcement has been removed",
-    });
+  // Update deleteAnnouncement to work with updates
+  const deleteAnnouncement = async (id: string) => {
+    try {
+      await updatesService.deleteUpdate(id);
+      toast({
+        title: "Update Deleted",
+        description: "The update has been removed",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete update",
+        variant: "destructive",
+      });
+    }
   };
 
   // Donor management functions
@@ -1270,27 +1264,33 @@ const Admin = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Add Announcement Type selector before title */}
                   <div>
                     <Label
-                      htmlFor="announcement-title"
+                      htmlFor="announcement-type"
                       className="text-base font-medium"
                     >
-                      Announcement Title *
+                      Announcement Type *
                     </Label>
-                    <Input
-                      id="announcement-title"
-                      placeholder="e.g., Lily passed her first English test!"
-                      value={newAnnouncement.title}
+                    <select
+                      id="announcement-type"
+                      value={newAnnouncement.type}
                       onChange={(e) =>
                         setNewAnnouncement({
                           ...newAnnouncement,
-                          title: e.target.value,
+                          type: e.target.value as
+                            | "Program Update"
+                            | "Milestone Reached",
                         })
                       }
-                      className="mt-2"
-                    />
+                      className="mt-2 w-full px-3 py-2 border border-input bg-background rounded-md"
+                    >
+                      <option value="Program Update">Program Update</option>
+                      <option value="Milestone Reached">
+                        Milestone Reached
+                      </option>
+                    </select>
                   </div>
-
                   <div>
                     <Label
                       htmlFor="announcement-content"
@@ -1313,26 +1313,6 @@ const Admin = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label
-                        htmlFor="student-name"
-                        className="text-base font-medium"
-                      >
-                        Student Name *
-                      </Label>
-                      <Input
-                        id="student-name"
-                        placeholder="e.g., Lily"
-                        value={newAnnouncement.studentName}
-                        onChange={(e) =>
-                          setNewAnnouncement({
-                            ...newAnnouncement,
-                            studentName: e.target.value,
-                          })
-                        }
-                        className="mt-2"
-                      />
-                    </div>
                     <div>
                       <Label htmlFor="school" className="text-base font-medium">
                         School *
@@ -1371,80 +1351,175 @@ const Admin = () => {
               {/* Manage Announcements */}
               <Card className="border-0 shadow-soft">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Star className="w-6 h-6 text-secondary" />
-                    <span>Manage Announcements</span>
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Star className="w-6 h-6 text-secondary" />
+                      <span>Manage Updates</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Badge variant="outline">
+                        {pendingUpdates.length} Pending
+                      </Badge>
+                      <Badge variant="default">
+                        {approvedUpdates.length} Live
+                      </Badge>
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {announcements.map((announcement) => (
-                      <Card key={announcement.id} className="card-hover">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                <h3 className="font-semibold text-lg">
-                                  {announcement.title}
-                                </h3>
-                                <Badge
-                                  variant={
-                                    announcement.isActive
-                                      ? "default"
-                                      : "outline"
-                                  }
-                                >
-                                  {announcement.isActive
-                                    ? "Active"
-                                    : "Inactive"}
-                                </Badge>
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                {announcement.content}
-                              </p>
-                              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                <div className="flex items-center space-x-1">
-                                  <Calendar className="w-3 h-3" />
-                                  <span>
-                                    {new Date(
-                                      announcement.date
-                                    ).toLocaleDateString()}
-                                  </span>
+                  <Tabs defaultValue="pending" className="space-y-4">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="pending">
+                        Pending ({pendingUpdates.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="approved">
+                        Live ({approvedUpdates.length})
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="pending" className="space-y-4">
+                      {pendingUpdates.map((update) => (
+                        <Card
+                          key={update.id}
+                          className="card-hover border-l-4 border-l-yellow-500"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <h3 className="font-semibold text-lg">
+                                    {update.type || `${update.type} Update`}
+                                  </h3>
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-yellow-50 text-yellow-700"
+                                  >
+                                    Pending Review
+                                  </Badge>
+                                  <Badge variant="secondary">
+                                    {update.type}
+                                  </Badge>
                                 </div>
-                                <span>•</span>
-                                <span>
-                                  {announcement.studentName} -{" "}
-                                  {announcement.school}
-                                </span>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {update.description}
+                                </p>
+                                <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                  <div className="flex items-center space-x-1">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>
+                                      Submitted:{" "}
+                                      {update.createdAt
+                                        ?.toDate()
+                                        .toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  {update.studentName && update.school && (
+                                    <>
+                                      <span>•</span>
+                                      <span>
+                                        {update.studentName} - {update.school}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex space-x-2 ml-4">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleApproveUpdate(update.id!)
+                                  }
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteAnnouncement(update.id!)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex space-x-2 ml-4">
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {pendingUpdates.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Star className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                          <p>No pending updates</p>
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="approved" className="space-y-4">
+                      {approvedUpdates.map((update) => (
+                        <Card
+                          key={update.id}
+                          className="card-hover border-l-4 border-l-green-500"
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <h3 className="font-semibold text-lg">
+                                    {update.type || `${update.type} Update`}
+                                  </h3>
+                                  <Badge
+                                    variant="default"
+                                    className="bg-green-600"
+                                  >
+                                    Live
+                                  </Badge>
+                                  <Badge variant="secondary">
+                                    {update.type}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  {update.description}
+                                </p>
+                                <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                                  <div className="flex items-center space-x-1">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>
+                                      Approved:{" "}
+                                      {update.approvedAt
+                                        ?.toDate()
+                                        .toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  {update.studentName && update.school && (
+                                    <>
+                                      <span>•</span>
+                                      <span>
+                                        {update.studentName} - {update.school}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() =>
-                                  toggleAnnouncementStatus(announcement.id)
-                                }
-                              >
-                                {announcement.isActive
-                                  ? "Deactivate"
-                                  : "Activate"}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  deleteAnnouncement(announcement.id)
-                                }
+                                onClick={() => deleteAnnouncement(update.id!)}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {approvedUpdates.length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <CheckCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                          <p>No live updates yet</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </div>
