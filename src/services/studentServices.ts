@@ -11,6 +11,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { updatesService } from "./updateServices";
 
 export interface Student {
   id?: string;
@@ -72,7 +73,8 @@ export const studentService = {
   // Update student grades
   async updateStudentGrades(
     studentId: string,
-    updates: { english?: number; math?: number }
+    updates: { english?: number; math?: number },
+    currentStudent?: Student
   ): Promise<void> {
     try {
       const studentRef = doc(db, STUDENTS_COLLECTION, studentId);
@@ -80,6 +82,37 @@ export const studentService = {
         ...updates,
         lastUpdated: Timestamp.now(),
       });
+
+      // Auto-create pending announcements for significant improvements (15+ points)
+      if (currentStudent) {
+        const significantImprovement = 15;
+
+        if (
+          updates.english &&
+          updates.english - currentStudent.english >= significantImprovement
+        ) {
+          const improvement = updates.english - currentStudent.english;
+          await updatesService.addPendingUpdate({
+            type: "Student Achievement",
+            description: `${currentStudent.name} from ${currentStudent.school} improved their English grade from ${currentStudent.english} to ${updates.english} (+${improvement} points)! Your donations are making a real difference in their learning journey.`,
+            studentName: currentStudent.name,
+            school: currentStudent.school,
+          });
+        }
+
+        if (
+          updates.math &&
+          updates.math - currentStudent.math >= significantImprovement
+        ) {
+          const improvement = updates.math - currentStudent.math;
+          await updatesService.addPendingUpdate({
+            type: "Student Achievement",
+            description: `${currentStudent.name} from ${currentStudent.school} improved their Math grade from ${currentStudent.math} to ${updates.math} (+${improvement} points)! Your donations are making a real difference in their learning journey.`,
+            studentName: currentStudent.name,
+            school: currentStudent.school,
+          });
+        }
+      }
     } catch (error) {
       console.error("Error updating student:", error);
       throw error;
