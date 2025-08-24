@@ -1601,7 +1601,7 @@ const Admin = () => {
                         <p className="text-sm text-muted-foreground mb-1">
                           Total Donors
                         </p>
-                        <p className="text-2xl font-bold text-secondary">
+                        <p className="text-2xl font-bold text-primary">
                           {donationStats.totalDonors}
                         </p>
                       </div>
@@ -1609,7 +1609,7 @@ const Admin = () => {
                         <p className="text-sm text-muted-foreground mb-1">
                           Average Donation
                         </p>
-                        <p className="text-2xl font-bold text-accent">
+                        <p className="text-2xl font-bold text-primary">
                           $
                           {Math.round(
                             donationStats.averageDonation
@@ -1620,7 +1620,7 @@ const Admin = () => {
                         <p className="text-sm text-muted-foreground mb-1">
                           This Month
                         </p>
-                        <p className="text-2xl font-bold text-green-600">
+                        <p className="text-2xl font-bold text-primary">
                           ${donationStats.thisMonthDonations.toLocaleString()}
                         </p>
                       </div>

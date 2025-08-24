@@ -216,10 +216,14 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-lg md:text-xl text-gray-700 dark:text-gray-300">
+                            <h3 className="font-bold text-lg">
                               {sortedDonors.filter(d => d.type === 'Individual')[1]?.name || 'Anonymous'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Individual</p>
+                            <Badge className={`mt-2 ${levels['Flowering Tree']?.color}`}>
+                              <Clover className="w-3 h-3 mr-1" />
+                              Flowering Tree
+                            </Badge>
                           </div>
                           
                           <div className="bg-amber-300 dark:bg-gray-800 rounded-lg p-4 text-center min-w-[120px] md:min-w-[140px]">
@@ -242,13 +246,13 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-xl md:text-2xl text-green-700 dark:text-green-400">
+                            <h3 className="font-bold text-xl">
                               {sortedDonors.filter(d => d.type === 'Individual')[0]?.name || 'Anonymous'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Individual</p>
-                            <Badge className={`mt-2 ${levels[sortedDonors.filter(d => d.type === 'Individual')[0]?.level || 'Seed']?.color}`}>
+                            <Badge className={`mt-2 ${levels['Evergreen']?.color}`}>
                               <Clover className="w-3 h-3 mr-1" />
-                              {sortedDonors.filter(d => d.type === 'Individual')[0]?.level || 'Seed'}
+                              Evergreen
                             </Badge>
                           </div>
                           
@@ -277,10 +281,14 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-base md:text-lg text-amber-700 dark:text-amber-400">
+                            <h3 className="font-bold text-base">
                               {sortedDonors.filter(d => d.type === 'Individual')[2]?.name || 'Anonymous'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Individual</p>
+                            <Badge className={`mt-2 ${levels['Sapling']?.color}`}>
+                              <Clover className="w-3 h-3 mr-1" />
+                              Sapling
+                            </Badge>
                           </div>
 
                           <div className="bg-orange-400 dark:bg-amber-900 rounded-lg p-4 text-center min-w-[100px] md:min-w-[120px]">
@@ -400,10 +408,14 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-lg md:text-xl text-gray-700 dark:text-gray-300">
+                            <h3 className="font-bold text-lg">
                               {sortedDonors.filter(d => d.type === 'Corporate')[1]?.name || 'Anonymous Corp'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Corporate</p>
+                            <Badge className={`mt-2 ${levels[sortedDonors.filter(d => d.type === 'Corporate')[0]?.level || 'Seed']?.color}`}>
+                              <Clover className="w-3 h-3 mr-1" />
+                              {sortedDonors.filter(d => d.type === 'Corporate')[0]?.level || 'Seed'}
+                            </Badge>
                           </div>
                           
                           <div className="bg-amber-300 dark:bg-gray-800 rounded-lg p-4 text-center min-w-[120px] md:min-w-[140px]">
@@ -426,7 +438,7 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-xl md:text-2xl text-amber-800 dark:text-amber-600">
+                            <h3 className="font-bold text-xl">
                               {sortedDonors.filter(d => d.type === 'Corporate')[0]?.name || 'Anonymous Corp'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Corporate</p>
@@ -461,11 +473,15 @@ const Leaderboard = () => {
                           </div>
                           
                           <div className="text-center mb-4">
-                            <h3 className="font-bold text-base md:text-lg text-orange-800 dark:text-orange-600">
+                            <h3 className="font-bold text-base">
                               {sortedDonors.filter(d => d.type === 'Corporate')[2]?.name || 'Anonymous Corp'}
                             </h3>
                             <p className="text-sm text-muted-foreground">Corporate</p>
-                </div>
+                            <Badge className={`mt-2 ${levels['Flowering Tree']?.color}`}>
+                              <Clover className="w-3 h-3 mr-1" />
+                                Flowering Tree
+                            </Badge>
+                          </div>
 
                           <div className="bg-orange-400 dark:bg-amber-900 rounded-lg p-4 text-center min-w-[100px] md:min-w-[120px]">
                             <p className="text-2xl font-bold">
