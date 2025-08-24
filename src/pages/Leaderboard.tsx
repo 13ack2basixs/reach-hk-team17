@@ -272,7 +272,7 @@ const Leaderboard = () => {
                             <div className="absolute -top-2 -right-2 w-8 h-8 
                                             bg-orange-600 rounded-full flex items-center 
                                             justify-center text-white font-bold text-sm">
-                              2
+                              3
                             </div>
                           </div>
                           
@@ -302,7 +302,7 @@ const Leaderboard = () => {
                       </h3>
                       <div className="space-y-4">
                         {sortedDonors.filter(d => d.type === 'Individual').slice(3, 10).map((donor, index) => (
-                          <Card key={donor.id} className="rounded-lg bg-card text-card-forreground shadow-sm text-center card-hover border-0 shadow-soft hover:scale-[1.02]">
+                          <Card key={donor.id} className="rounded-lg bg-card text-card-foreground shadow-sm text-center card-hover border-0 shadow-soft hover:scale-[1.02]">
                             <CardContent className="p-4 flex items-center gap-4 relative"> 
                               {/* Rank Badge */}
                               <div className="absolute -top-3 transform -translate-x-7">
@@ -378,18 +378,23 @@ const Leaderboard = () => {
                   {sortedDonors.filter(d => d.type === 'Corporate').length >= 3 && (
                     <div className="mb-12 relative">
                       
-                      <h2 className="text-3xl font-bold text-center mb-8 text-gradient bg-clip-text text-transparent bg-gradient-to-r from-amber-700 via-orange-700 to-red-800">
-                        🏢 Top Corporate Donors
+                      <h2 className="text-3xl font-bold text-center mb-8 text-secondary">
+                        Top Corporate Donors
                       </h2>
                       
                       <div className="flex items-end justify-center gap-4 md:gap-8 max-w-4xl mx-auto">
                         {/* 2nd Place */}
                         <div className="flex flex-col items-center order-2 md:order-1">
                           <div className="relative mb-4">
-                            <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-b from-gray-300 to-gray-400 rounded-full flex items-center justify-center shadow-lg border-4 border-gray-200">
-                              <Medal className="w-8 h-8 md:w-10 md:h-10 text-gray-600" />
+                            <div className="w-20 h-20 md:w-24 md:h-24 
+                                            bg-gradient-to-b from-amber-300 to-orange-500 
+                                            rounded-full flex items-center justify-center 
+                                            shadow-lg border-4 border-amber-200">
+                              <Medal className="w-8 h-8 md:w-10 md:h-10 text-orange-700" />
                             </div>
-                            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            <div className="absolute -top-2 -right-2 w-8 h-8 
+                                            bg-amber-600 rounded-full flex items-center 
+                                            justify-center text-white font-bold text-sm">
                               2
                             </div>
                           </div>
@@ -401,7 +406,7 @@ const Leaderboard = () => {
                             <p className="text-sm text-muted-foreground">Corporate</p>
                           </div>
                           
-                          <div className="bg-gray-600 dark:bg-gray-800 rounded-lg p-4 text-center min-w-[120px] md:min-w-[140px]">
+                          <div className="bg-amber-300 dark:bg-gray-800 rounded-lg p-4 text-center min-w-[120px] md:min-w-[140px]">
                             <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
                               ${sortedDonors.filter(d => d.type === 'Corporate')[1]?.totalDonated.toLocaleString() || '0'}
                             </p>
@@ -412,10 +417,10 @@ const Leaderboard = () => {
                         {/* 1st Place */}
                         <div className="flex flex-col items-center order-1 md:order-2">
                           <div className="relative mb-4">
-                            <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-b from-amber-600 to-orange-700 rounded-full flex items-center justify-center shadow-xl border-4 border-amber-500 transform scale-110">
-                              <Crown className="w-10 h-10 md:w-12 md:h-12 text-amber-800" />
+                            <div className="w-24 h-24 md:w-32 md:h-32 bg-gradient-to-b from-green-300 to-green-500 rounded-full flex items-center justify-center shadow-xl border-4 border-green-200 transform scale-110">
+                              <Crown className="w-10 h-10 md:w-12 md:h-12 text-green-700" />
                             </div>
-                            <div className="absolute -top-2 -right-2 w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                            <div className="absolute -top-2 -right-2 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                               1
                             </div>
                           </div>
@@ -431,21 +436,26 @@ const Leaderboard = () => {
                             </Badge>
                           </div>
                           
-                          <div className="bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900 dark:to-orange-900 rounded-lg p-4 text-center min-w-[140px] md:min-w-[160px] border-2 border-amber-400">
-                            <p className="text-3xl font-bold text-amber-800 dark:text-amber-200">
+                          <div className="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 rounded-lg p-4 text-center min-w-[140px] md:min-w-[160px] border-2 border-green-300">
+                            <p className="text-3xl font-bold">
                               ${sortedDonors.filter(d => d.type === 'Corporate')[0]?.totalDonated.toLocaleString() || '0'}
                             </p>
-                            <p className="text-xs text-muted-foreground">Total Donated</p>
+                            <p className="text-xs">Total Donated</p>
                           </div>
                         </div>
 
                         {/* 3rd Place */}
                         <div className="flex flex-col items-center order-3">
                           <div className="relative mb-4">
-                            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-b from-orange-500 to-red-600 rounded-full flex items-center justify-center shadow-lg border-4 border-orange-400">
-                              <Medal className="w-6 h-6 md:w-8 md:h-8 text-orange-800" />
+                            <div className="w-20 h-20 md:w-24 md:h-24 
+                                            bg-gradient-to-b from-orange-600 to-orange-800 
+                                            rounded-full flex items-center justify-center 
+                                            shadow-lg border-4 border-orange-600">
+                              <Medal className="w-8 h-8 md:w-10 md:h-10 text-orange-100" />
                             </div>
-                            <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                            <div className="absolute -top-2 -right-2 w-8 h-8 
+                                            bg-orange-600 rounded-full flex items-center 
+                                            justify-center text-white font-bold text-sm">
                               3
                             </div>
                           </div>
@@ -457,11 +467,11 @@ const Leaderboard = () => {
                             <p className="text-sm text-muted-foreground">Corporate</p>
                 </div>
 
-                          <div className="bg-orange-100 dark:bg-orange-900 rounded-lg p-4 text-center min-w-[100px] md:min-w-[120px]">
-                            <p className="text-2xl font-bold text-orange-800 dark:text-orange-300">
+                          <div className="bg-orange-400 dark:bg-amber-900 rounded-lg p-4 text-center min-w-[100px] md:min-w-[120px]">
+                            <p className="text-2xl font-bold">
                               ${sortedDonors.filter(d => d.type === 'Corporate')[2]?.totalDonated.toLocaleString() || '0'}
                             </p>
-                            <p className="text-xs text-muted-foreground">Total Donated</p>
+                            <p className="text-xs">Total Donated</p>
                           </div>
                         </div>
                       </div>
@@ -476,11 +486,11 @@ const Leaderboard = () => {
                       </h3>
                       <div className="space-y-4">
                         {sortedDonors.filter(d => d.type === 'Corporate').slice(3, 10).map((donor, index) => (
-                          <Card key={donor.id} className="border-0 shadow-soft overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+                          <Card key={donor.id} className="border-0 shadow-soft hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
                             <CardContent className="p-4 flex items-center gap-4 relative"> 
                               {/* Rank Badge */}
-                              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center shadow-glow text-white font-bold text-sm">
+                              <div className="absolute -top-3 transform -translate-x-7">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center shadow-glow text-white font-bold text-sm">
                                   {index + 4}
                                 </div>
                               </div>
