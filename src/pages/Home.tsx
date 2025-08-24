@@ -5,6 +5,11 @@ import { Link } from "react-router-dom";
 import reachFrontpage from "@/assets/reach-frontpage.jpg";
 import childrenLearning from "@/assets/children-learn.jpg";
 import communitySupport from "@/assets/community.jpg";
+import students from "@/assets/students.jpeg";
+import vivianChung from "@/assets/vivian-chung.jpg";
+import quincyTse from "@/assets/quincy-tse.jpg";
+import sallyNg from "@/assets/sally-ng.jpg";
+import myolieLau from "@/assets/myolie-lau.jpg";
 
 const Home = () => {
   const stats = [
@@ -255,7 +260,7 @@ const Home = () => {
                 </div>
                 <div className="relative">
                   <img 
-                    src={childrenLearning} 
+                    src={students} 
                     alt="Children in need of educational support"
                     className="rounded-2xl shadow-warm w-full"
                   />
@@ -556,24 +561,28 @@ const Home = () => {
               </div>
               
               <div className="relative">
-                <img 
-                  src={childrenLearning} 
-                  alt="Vivian Chung - Co-Founder"
-                  className="rounded-2xl shadow-warm w-full"
-                />
-                <div className="absolute inset-0 bg-gradient-primary/10 rounded-2xl"></div>
+                <div className="ml-8">
+                  <img 
+                    src={vivianChung} 
+                    alt="Vivian Chung - Co-Founder"
+                    className="rounded-full shadow-warm w-80 h-80 object-cover ml-8"
+                  />
+                  <div className="absolute inset-0 bg-gradient-primary/10 rounded-full"></div>
+                </div>
               </div>
             </div>
 
             {/* Quincy Tse */}
             <div className="grid lg:grid-cols-2 gap-12 items-start mb-20">
               <div className="relative lg:order-2">
-                <img 
-                  src={childrenLearning} 
-                  alt="Quincy Tse - Co-founder"
-                  className="rounded-2xl shadow-warm w-full"
-                />
-                <div className="absolute inset-0 bg-gradient-secondary/10 rounded-2xl"></div>
+                <div className="ml-8">
+                  <img 
+                    src={quincyTse} 
+                    alt="Quincy Tse - Co-founder"
+                    className="rounded-full shadow-warm w-80 h-80 object-cover ml-8"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-secondary/10 rounded-full"></div>
               </div>
               
               <div className="lg:order-1">
@@ -631,24 +640,28 @@ const Home = () => {
               </div>
               
               <div className="relative">
-                <img 
-                  src={childrenLearning} 
-                  alt="Sally Ng - Co-founder"
-                  className="rounded-2xl shadow-warm w-full"
-                />
-                <div className="absolute inset-0 bg-gradient-accent/10 rounded-2xl"></div>
+                <div className="ml-8">
+                  <img 
+                    src={sallyNg} 
+                    alt="Sally Ng - Co-founder"
+                    className="rounded-full shadow-warm w-80 h-80 object-cover ml-8"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-accent/10 rounded-full"></div>
               </div>
             </div>
 
             {/* Myolie Lau */}
             <div className="grid lg:grid-cols-2 gap-12 items-start">
               <div className="relative lg:order-2">
-                <img 
-                  src={childrenLearning} 
-                  alt="Myolie Lau - Director of Education and Outreach"
-                  className="rounded-2xl shadow-warm w-full"
-                />
-                <div className="absolute inset-0 bg-gradient-primary/10 rounded-2xl"></div>
+                <div className="ml-8">
+                  <img 
+                    src={myolieLau} 
+                    alt="Myolie Lau - Director of Education and Outreach"
+                    className="rounded-full shadow-warm w-80 h-80 object-cover ml-8"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-primary/10 rounded-full"></div>
               </div>
               
               <div className="lg:order-1">

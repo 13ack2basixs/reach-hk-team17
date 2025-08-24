@@ -19,7 +19,6 @@ export interface Student {
   school: string;
   class: string;
   english: number;
-  math: number;
   region: string;
   lastUpdated?: Timestamp | Date;
   createdAt?: Timestamp | Date;
@@ -58,7 +57,6 @@ export const studentService = {
           school: data.school || "",
           class: data.class || "",
           english: data.english || 0,
-          math: data.math || 0,
           region: data.region || "",
           lastUpdated: data.lastUpdated || Timestamp.now(),
           createdAt: data.createdAt || Timestamp.now(),
@@ -73,7 +71,7 @@ export const studentService = {
   // Update student grades
   async updateStudentGrades(
     studentId: string,
-    updates: { english?: number; math?: number },
+    updates: { english?: number },
     currentStudent?: Student
   ): Promise<void> {
     try {
@@ -95,19 +93,6 @@ export const studentService = {
           await updatesService.addPendingUpdate({
             type: "Student Achievement",
             description: `${currentStudent.name} from ${currentStudent.school} improved their English grade from ${currentStudent.english} to ${updates.english} (+${improvement} points)! Your donations are making a real difference in their learning journey.`,
-            studentName: currentStudent.name,
-            school: currentStudent.school,
-          });
-        }
-
-        if (
-          updates.math &&
-          updates.math - currentStudent.math >= significantImprovement
-        ) {
-          const improvement = updates.math - currentStudent.math;
-          await updatesService.addPendingUpdate({
-            type: "Student Achievement",
-            description: `${currentStudent.name} from ${currentStudent.school} improved their Math grade from ${currentStudent.math} to ${updates.math} (+${improvement} points)! Your donations are making a real difference in their learning journey.`,
             studentName: currentStudent.name,
             school: currentStudent.school,
           });
@@ -146,7 +131,6 @@ export const studentService = {
             school: data.school || "",
             class: data.class || "",
             english: data.english || 0,
-            math: data.math || 0,
             region: data.region || "",
             lastUpdated: data.lastUpdated || Timestamp.now(),
             createdAt: data.createdAt || Timestamp.now(),

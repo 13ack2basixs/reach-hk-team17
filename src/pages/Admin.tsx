@@ -41,7 +41,7 @@ import { updatesService, Update } from "@/services/updateServices";
 import {
   uploadImages,
   saveStory,
-  addTailwindClassesToHtml
+  addTailwindClassesToHtml,
 } from "@/services/blogService";
 import { callGenerateBlog } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
@@ -123,7 +123,6 @@ const Admin = () => {
     school: "",
     class: "",
     englishGrade: "",
-    mathGrade: "",
   });
 
   // Announcement state
@@ -143,28 +142,19 @@ const Admin = () => {
     previousGrades: { english: number; math: number }
   ) => {
     const englishImprovement = student.english - previousGrades.english;
-    const mathImprovement = student.math - previousGrades.math;
 
     // Check for significant achievements
-    if (student.english >= 95 || student.math >= 95) {
+    if (student.english >= 95) {
       // Excellent performance achievement
       await updatesService.addUpdate({
         type: "Student Achievement",
-        description: `${student.name} (${student.school}) scored ${student.english >= 95
-            ? student.english + "% in English"
-            : student.math + "% in Math"
-          }! Thanks to your support, students are reaching new heights.`,
+        description: `${student.name} (${student.school}) scored ${student.english}% in English! Thanks to your support, students are reaching new heights.`,
         createdAt: Timestamp.now(),
       });
-    } else if (englishImprovement >= 5 || mathImprovement >= 5) {
-      // Significant improvement achievement
-      const subject = englishImprovement >= 5 ? "English" : "Math";
-      const improvement =
-        englishImprovement >= 5 ? englishImprovement : mathImprovement;
-
+    } else if (englishImprovement >= 5) {
       await updatesService.addUpdate({
         type: "Student Achievement",
-        description: `${student.name} (${student.school}) improved their ${subject} grade by ${improvement} points! Your donations are making a real difference in children's learning journey.`,
+        description: `${student.name} (${student.school}) improved their English grade by ${englishImprovement} points! Your donations are making a real difference in children's learning journey.`,
         createdAt: Timestamp.now(),
       });
     }
@@ -185,7 +175,6 @@ const Admin = () => {
       school: student.school,
       class: student.class,
       englishGrade: student.english.toString(),
-      mathGrade: student.math.toString(),
     });
   };
 
@@ -193,7 +182,6 @@ const Admin = () => {
     if (!editingStudent || !editingStudent.id) return;
 
     const englishGrade = parseInt(quickGradeForm.englishGrade);
-    const mathGrade = parseInt(quickGradeForm.mathGrade);
 
     try {
       setSaving(true);
@@ -202,7 +190,6 @@ const Admin = () => {
         editingStudent.id,
         {
           english: englishGrade,
-          math: mathGrade,
         },
         editingStudent // Pass current student for improvement comparison
       );
@@ -218,7 +205,6 @@ const Admin = () => {
         school: "",
         class: "",
         englishGrade: "",
-        mathGrade: "",
       });
     } catch (error) {
       console.error("Error updating student:", error);
@@ -262,7 +248,6 @@ const Admin = () => {
           school: "",
           class: "",
           englishGrade: "",
-          mathGrade: "",
         });
       }
     } catch (error) {
@@ -449,9 +434,9 @@ const Admin = () => {
         // 3) Save the structured blog AND set your current preview string with HTML
 
         res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
-  
-      res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
-      setGenerated(res.blog);
+
+        res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
+        setGenerated(res.blog);
         const html = `
           <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
           <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
@@ -918,8 +903,7 @@ const Admin = () => {
     if (
       !quickGradeForm.studentName ||
       !quickGradeForm.school ||
-      !quickGradeForm.englishGrade ||
-      !quickGradeForm.mathGrade
+      !quickGradeForm.englishGrade
     ) {
       toast({
         title: "Missing Information",
@@ -933,7 +917,6 @@ const Admin = () => {
 
     try {
       const englishGrade = parseInt(quickGradeForm.englishGrade);
-      const mathGrade = parseInt(quickGradeForm.mathGrade);
 
       // Check if student already exists
       const existingStudent = students.find(
@@ -946,7 +929,6 @@ const Admin = () => {
         // Update existing student
         await studentService.updateStudentGrades(existingStudent.id, {
           english: englishGrade,
-          math: mathGrade,
         });
 
         toast({
@@ -960,7 +942,6 @@ const Admin = () => {
           school: quickGradeForm.school,
           class: quickGradeForm.class,
           english: englishGrade,
-          math: mathGrade,
           region: "Tin Shui Wai",
         });
 
@@ -976,7 +957,6 @@ const Admin = () => {
         school: "",
         class: "",
         englishGrade: "",
-        mathGrade: "",
       });
     } catch (error) {
       console.error("Error saving student:", error);
@@ -1227,26 +1207,26 @@ const Admin = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {generatedBlog ? (
-                      <div className="prose prose-sm max-w-none">
-                        <div className="bg-muted/30 p-6 rounded-lg border">
-                            <div
-                            className="font-sans text-sm leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: generatedBlog }}
-                          />
-                        </div>
+                  {generatedBlog ? (
+                    <div className="prose prose-sm max-w-none">
+                      <div className="bg-muted/30 p-6 rounded-lg border">
+                        <div
+                          className="font-sans text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                        />
                       </div>
-                    ) : (
-                      <div className="text-center py-12 text-muted-foreground">
-                        <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg">
                         Your generated story will appear here
                       </p>
                       <p className="text-sm">
                         Upload images and add a description to get started
                       </p>
-                      </div>
-                    )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -2104,10 +2084,11 @@ const Admin = () => {
 
                 {/* Quick Add Grade Form */}
                 <Card
-                  className={`mb-6 ${editingStudent
+                  className={`mb-6 ${
+                    editingStudent
                       ? "bg-blue-50 border-blue-200"
                       : "bg-accent/10 border-accent/20"
-                    }`}
+                  }`}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">
@@ -2127,7 +2108,6 @@ const Admin = () => {
                               school: "",
                               class: "",
                               englishGrade: "",
-                              mathGrade: "",
                             });
                           }}
                         >
@@ -2137,7 +2117,7 @@ const Admin = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid md:grid-cols-6 gap-4">
+                    <div className="grid md:grid-cols-5 gap-4">
                       <Input
                         placeholder="Student Name"
                         value={quickGradeForm.studentName}
@@ -2188,19 +2168,6 @@ const Admin = () => {
                           setQuickGradeForm({
                             ...quickGradeForm,
                             englishGrade: e.target.value,
-                          })
-                        }
-                      />
-                      <Input
-                        placeholder="Math Grade"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={quickGradeForm.mathGrade}
-                        onChange={(e) =>
-                          setQuickGradeForm({
-                            ...quickGradeForm,
-                            mathGrade: e.target.value,
                           })
                         }
                       />
@@ -2278,48 +2245,41 @@ const Admin = () => {
                                 </p>
                               </div>
                               <div className="text-center">
-                                <p className="text-2xl font-bold text-secondary">
-                                  {student.math}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Math
-                                </p>
-                                </div>
-
                                 {/* Actions */}
                                 <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditStudent(student)}
-                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditStudent(student)}
+                                  >
                                     <Edit className="w-4 h-4" />
                                   </Button>
                                   <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleDeleteStudent(
-                                      student.id!,
-                                      student.name
-                                    )
-                                  }
-                                  disabled={saving}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  {saving ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleDeleteStudent(
+                                        student.id!,
+                                        student.name
+                                      )
+                                    }
+                                    disabled={saving}
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    {saving ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
                                       <Trash2 className="w-4 h-4" />
-                                  )}
+                                    )}
                                   </Button>
                                 </div>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
                 )}
 
                 {!loading && filteredStudents.length === 0 && (
