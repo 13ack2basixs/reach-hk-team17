@@ -41,12 +41,11 @@ import { updatesService, Update } from "@/services/updateServices";
 import {
   uploadImages,
   saveStory,
-  addTailwindClassesToHtml,
+  addTailwindClassesToHtml
 } from "@/services/blogService";
 import { callGenerateBlog } from "@/lib/firebase";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-
 import { toast, useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAnnouncements } from "@/contexts/AnnouncementContext";
@@ -151,11 +150,10 @@ const Admin = () => {
       // Excellent performance achievement
       await updatesService.addUpdate({
         type: "Student Achievement",
-        description: `${student.name} (${student.school}) scored ${
-          student.english >= 95
+        description: `${student.name} (${student.school}) scored ${student.english >= 95
             ? student.english + "% in English"
             : student.math + "% in Math"
-        }! Thanks to your support, students are reaching new heights.`,
+          }! Thanks to your support, students are reaching new heights.`,
         createdAt: Timestamp.now(),
       });
     } else if (englishImprovement >= 5 || mathImprovement >= 5) {
@@ -451,7 +449,9 @@ const Admin = () => {
         // 3) Save the structured blog AND set your current preview string with HTML
 
         res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
-        setGenerated(res.blog);
+  
+      res.blog.bodyHtml = addTailwindClassesToHtml(res.blog.bodyHtml);
+      setGenerated(res.blog);
         const html = `
           <h2 class="text-xl font-semibold mb-2">${res.blog.title}</h2>
           <p class="text-sm text-muted-foreground mb-4">${res.blog.summary}</p>
@@ -1227,25 +1227,26 @@ const Admin = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {generatedBlog ? (
-                    <div className="prose prose-sm max-w-none">
-                      <div className="bg-muted/30 p-6 rounded-lg border">
-                        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                          {generatedBlog}
-                        </pre>
+                    {generatedBlog ? (
+                      <div className="prose prose-sm max-w-none">
+                        <div className="bg-muted/30 p-6 rounded-lg border">
+                            <div
+                            className="font-sans text-sm leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: generatedBlog }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <BookOpen className="w-16 h-16 mx-auto mb-4 opacity-50" />
                       <p className="text-lg">
                         Your generated story will appear here
                       </p>
                       <p className="text-sm">
                         Upload images and add a description to get started
                       </p>
-                    </div>
-                  )}
+                      </div>
+                    )}
                 </CardContent>
               </Card>
             </div>
@@ -2103,11 +2104,10 @@ const Admin = () => {
 
                 {/* Quick Add Grade Form */}
                 <Card
-                  className={`mb-6 ${
-                    editingStudent
+                  className={`mb-6 ${editingStudent
                       ? "bg-blue-50 border-blue-200"
                       : "bg-accent/10 border-accent/20"
-                  }`}
+                    }`}
                 >
                   <CardHeader>
                     <CardTitle className="text-lg flex items-center justify-between">
@@ -2284,18 +2284,18 @@ const Admin = () => {
                                 <p className="text-xs text-muted-foreground">
                                   Math
                                 </p>
-                              </div>
+                                </div>
 
-                              {/* Actions */}
-                              <div className="flex space-x-2">
+                                {/* Actions */}
+                                <div className="flex space-x-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleEditStudent(student)}
                                 >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() =>
@@ -2310,16 +2310,16 @@ const Admin = () => {
                                   {saving ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                   ) : (
-                                    <Trash2 className="w-4 h-4" />
+                                      <Trash2 className="w-4 h-4" />
                                   )}
-                                </Button>
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
                 )}
 
                 {!loading && filteredStudents.length === 0 && (

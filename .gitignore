@@ -24,3 +24,6 @@ src/lib/firebase.ts
 *.njsproj
 *.sln
 *.sw?
+*.pyc
+
+.env
