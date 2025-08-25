@@ -27,3 +27,7 @@ src/lib/firebase.ts
 *.pyc
 
 .env
+
+# Env files
+.env
+.env.*
